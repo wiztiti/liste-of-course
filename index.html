@@ -463,8 +463,8 @@
   }
   .modal-article.barre .modal-art-nom {
     text-decoration: line-through;
-    text-decoration-color: #222;
-    text-decoration-thickness: 3px;
+    text-decoration-color: #111;
+    text-decoration-thickness: 6px;
     color: #777;
     font-style: italic;
   }
@@ -1258,7 +1258,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
       const isBarre = barre[a.id];
       return `
         <div class="modal-article ${isBarre ? 'barre' : ''}" id="ma-${a.id}" data-art-id="${a.id}" onpointerdown="artItemPointerDown(event,'${a.id}')" onpointerup="artItemPointerUp(event,'${a.id}')" onpointercancel="artItemCancel()" onclick="event.preventDefault()">
-          ${isBarre ? '<span style="font-size:1.1rem;flex-shrink:0">🛒</span>' : ''}
+          <span class="chariot-icon" style="font-size:1.1rem;flex-shrink:0;display:${isBarre ? 'inline' : 'none'}">🛒</span>
           <span class="modal-art-nom" style="text-decoration:${isBarre ? 'line-through' : 'none'}">${a.nom}</span>
           <span class="modal-art-drag" onpointerdown="artDragStart(event,'${a.id}')" onclick="event.stopPropagation()">☰</span>
         </div>`;
@@ -1329,15 +1329,8 @@ function toggleBarre(id) {
   if (!el) return;
   el.classList.toggle('barre', barre[id]);
   // Icône chariot
-  const existingIcon = el.querySelector('.chariot-icon');
-  if (existingIcon) existingIcon.remove();
-  if (barre[id]) {
-    const icon = document.createElement('span');
-    icon.className = 'chariot-icon';
-    icon.style.cssText = 'font-size:1.1rem;flex-shrink:0';
-    icon.textContent = '🛒';
-    el.insertBefore(icon, el.firstChild);
-  }
+  const chariotIcon = el.querySelector('.chariot-icon');
+  if (chariotIcon) chariotIcon.style.display = barre[id] ? 'inline' : 'none';
   const nom = el.querySelector('.modal-art-nom');
   if (nom) nom.style.textDecoration = barre[id] ? 'line-through' : '';
 
