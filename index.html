@@ -792,15 +792,6 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label">Taille du texte</label>
-      <div style="display:flex;align-items:center;gap:12px;justify-content:center">
-        <button onclick="changerTaille(-0.1)" style="width:40px;height:40px;border-radius:50%;border:2px solid #eee;background:white;font-size:1.4rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#555">−</button>
-        <span id="fontsize-label" style="font-size:1.1rem;font-weight:900;color:#333;min-width:45px;text-align:center">1.4</span>
-        <button onclick="changerTaille(0.1)" style="width:40px;height:40px;border-radius:50%;border:2px solid #eee;background:white;font-size:1.4rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#555">+</button>
-      </div>
-    </div>
-
-    <div class="form-group">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.95rem;color:#555;font-weight:700">
         <input type="checkbox" id="chk-afficher-nom" style="width:18px;height:18px;cursor:pointer;accent-color:#FF6B9D">
         Afficher le nom sur la tuile
@@ -1058,6 +1049,7 @@ function toggleCarte(type) {
     carteOuverte = null;
   } else {
     carteOuverte = type;
+    history.pushState({ modal: true }, '');
   }
   render();
   if (carteOuverte) {
@@ -1480,7 +1472,9 @@ function majApercu() {
   if (!span) return;
   span.textContent = nom;
   span.style.color = editTexteCouleur;
-  span.style.fontSize = fs + 'rem';
+  const nomLen = nom.length;
+  const autoFs = nomLen > 12 ? 1.1 : nomLen > 8 ? 1.3 : 1.6;
+  span.style.fontSize = autoFs + 'rem';
   const lbl = document.getElementById('fontsize-label');
   if (lbl) lbl.textContent = fs.toFixed(1);
 }
@@ -1678,16 +1672,23 @@ function pushModalState() {
 }
 
 window.addEventListener('popstate', e => {
-  // Si un modal est ouvert, le fermer au lieu de quitter
+  // Si un modal est ouvert, le fermer
   const modals = ['modal-courses', 'modal-edit-enseigne', 'modal-edit-article',
                   'modal-confirm-suppr', 'modal-art-options', 'modal-choix'];
   for (const id of modals) {
     const el = document.getElementById(id);
     if (el && el.classList.contains('visible')) {
       fermerModal(id);
-      history.pushState({ modal: true }, ''); // remettre l'état pour le prochain retour
+      history.pushState({ modal: true }, '');
       return;
     }
+  }
+  // Si une carte est ouverte (liste ou réglages), la fermer
+  if (carteOuverte) {
+    carteOuverte = null;
+    render();
+    history.pushState({ modal: true }, '');
+    return;
   }
 });
 
