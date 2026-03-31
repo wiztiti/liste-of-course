@@ -28,12 +28,66 @@
     font-family: 'Nunito', sans-serif;
     min-height: 100dvh;
     background: linear-gradient(160deg, #e0f7fa 0%, #b2ebf2 40%, #c8e6c9 100%);
-    padding: 16px 0 100px 0;
+    padding: 0;
     touch-action: pan-y;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
+
+  /* TOPBAR */
+  .topbar {
+    background: white;
+    padding: 14px 20px 10px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-titre {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #2d2d44;
+  }
+
+  /* TAB BAR */
+  .tabbar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 520px;
+    background: white;
+    display: flex;
+    border-top: 1px solid #eee;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    gap: 3px;
+    color: #aaa;
+    transition: color 0.2s;
+  }
+  .tab.active { color: #2d2d44; }
+  .tab-icon { font-size: 1.4rem; }
+  .tab-label { font-size: 0.7rem; font-weight: 800; font-family: 'Nunito', sans-serif; letter-spacing: 0.5px; }
+
+  /* PAGES */
+  .page { padding-bottom: 80px; }
 
   /* WRAPPER GLOBAL */
   .app-wrap {
@@ -652,9 +706,39 @@
 <body>
 
 <div class="app-wrap">
-<div class="grille" id="grille">
-  <!-- Les cartes sont générées par JS -->
-</div>
+  <!-- HEADER -->
+  <div class="topbar" id="topbar">
+    <span class="topbar-titre" id="topbar-titre">🛒 Courses</span>
+  </div>
+
+  <!-- PAGES -->
+  <div class="page" id="page-courses">
+    <div class="grille" id="grille"></div>
+  </div>
+
+  <div class="page" id="page-liste" style="display:none">
+    <div id="vue-liste" style="padding:12px 14px"></div>
+  </div>
+
+  <div class="page" id="page-enseignes" style="display:none">
+    <div id="vue-enseignes" style="padding:12px 14px"></div>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav class="tabbar">
+    <button class="tab active" id="tab-courses" onclick="switchTab('courses')">
+      <span class="tab-icon">🛒</span>
+      <span class="tab-label">Courses</span>
+    </button>
+    <button class="tab" id="tab-liste" onclick="switchTab('liste')">
+      <span class="tab-icon">📋</span>
+      <span class="tab-label">Ma liste</span>
+    </button>
+    <button class="tab" id="tab-enseignes" onclick="switchTab('enseignes')">
+      <span class="tab-icon">🏪</span>
+      <span class="tab-label">Enseignes</span>
+    </button>
+  </nav>
 </div><!-- /app-wrap -->
 
 <!-- MODAL JE PARS : choix enseigne -->
@@ -906,13 +990,15 @@ let carteOuverte = null; // 'liste' | 'reglages' | null
 
 // ===================== RENDU =====================
 function render() {
+  renderCourses();
+  renderListe();
+  renderEnseignes();
+}
+
+function renderCourses() {
   const grille = document.getElementById('grille');
+  if (!grille) return;
   grille.innerHTML = '';
-
-  // 1. Carte liste
-  grille.appendChild(creerCarteListe());
-
-  // 2. Cartes magasins (triées par nb d'articles croissant)
   const ordreTrié = [...ordreMagasins].sort((a, b) => {
     const nbA = articles.filter(x => x.enseigneId === a).length;
     const nbB = articles.filter(x => x.enseigneId === b).length;
@@ -923,11 +1009,45 @@ function render() {
     const nb = articles.filter(a => a.enseigneId === id).length;
     if (e && nb > 0) grille.appendChild(creerCarteMagasin(e, idx));
   });
-
-  // 3. Carte Ajout enseigne (toujours en dernier)
-  grille.appendChild(creerCarteReglages());
-
   initDrag();
+}
+
+function renderListe() {
+  const vue = document.getElementById('vue-liste');
+  if (!vue) return;
+  vue.innerHTML = `
+    <div id="liste-articles">${renderArticles()}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+      <input type="text" id="input-article" placeholder="Ajouter un article…"
+        onkeydown="if(event.key==='Enter')ajouterArticle()"
+        style="width:100%;border:2px solid #eee;border-radius:12px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:0.92rem;outline:none;">
+      <div style="display:flex;gap:8px">
+        <select id="select-enseigne" style="flex:1;border:2px solid #eee;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:0.85rem;outline:none;background:white;color:#444">${optionsEnseignes()}</select>
+        <button class="btn" onclick="ajouterArticle()" style="padding:10px 22px;font-size:1rem">Ajouter</button>
+      </div>
+    </div>`;
+}
+
+function renderEnseignes() {
+  const vue = document.getElementById('vue-enseignes');
+  if (!vue) return;
+  vue.innerHTML = `
+    <div class="section-titre">Mes enseignes</div>
+    ${enseignes.map(e => creerEnseigneRowHTML(e)).join('')}
+    <button class="btn-add-enseigne" onclick="ajouterEnseigne()" style="margin-top:12px">＋ Ajouter une enseigne</button>`;
+}
+
+let ongletActif = 'courses';
+function switchTab(tab) {
+  ongletActif = tab;
+  ['courses','liste','enseignes'].forEach(t => {
+    document.getElementById('page-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  const titres = { courses: '🛒 Courses', liste: '📋 Ma liste', enseignes: '🏪 Enseignes' };
+  document.getElementById('topbar-titre').textContent = titres[tab];
+  if (tab === 'liste') renderListe();
+  if (tab === 'enseignes') renderEnseignes();
 }
 
 function logoHTML(e, size = 56, radius = 14) {
@@ -1088,10 +1208,6 @@ function ajouterArticle() {
     b.textContent = total;
     h.appendChild(b);
   }
-  // Re-render pour les cartes magasins (badges)
-  render();
-  // Rester sur la liste
-  carteOuverte = 'liste';
   render();
 }
 
