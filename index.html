@@ -457,14 +457,15 @@
   }
   .modal-article:active { background: #f0f0f0; }
   .modal-article.barre {
-    background: #e8f5e9;
-    border-color: #43e97b;
+    background: #f9f9f9;
+    border-color: transparent;
+    opacity: 0.6;
   }
   .modal-article.barre .modal-art-nom {
     text-decoration: line-through;
-    text-decoration-color: #43e97b;
-    text-decoration-thickness: 4px;
-    color: #999;
+    text-decoration-color: #333;
+    text-decoration-thickness: 2px;
+    color: #888;
   }
   .modal-art-check {
     width: 24px;
@@ -767,13 +768,10 @@
       <input class="form-input" type="text" id="modal-cours-input" placeholder="Ajouter un produit…" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')ajouterDepuisModal()">
       <button onclick="ajouterDepuisModal()" style="background:#2d2d44;color:white;border:none;border-radius:12px;padding:0 16px;font-size:1.2rem;cursor:pointer;font-weight:900">+</button>
     </div>
-    <div id="btn-effacer-coches" style="display:none;margin-top:16px;border-top:1px solid #f0f0f0;padding-top:16px">
-      <label style="display:flex;align-items:center;gap:10px;font-size:0.88rem;color:#888;cursor:pointer;margin-bottom:14px">
-        <input type="checkbox" id="chk-non-trouves" style="width:16px;height:16px;cursor:pointer;accent-color:#ff6b6b">
-        Supprimer aussi les articles non trouvés
-      </label>
-      <button class="btn-valider" style="background:linear-gradient(135deg,#ff6b6b,#ee5a24);margin-bottom:8px" onclick="effacerCoches()">🗑️ Supprimer les produits achetés</button>
-      <button class="btn-modal-fermer" style="background:#f0f0f0;color:#555" onclick="annulerEffacement()">Annuler</button>
+    <div id="btn-effacer-coches" style="margin-top:12px;text-align:center">
+      <button onclick="effacerCoches()" style="background:none;border:none;color:#e74c3c;font-size:0.8rem;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;opacity:0.7;padding:4px 8px">
+        🗑️ Supprimer les produits achetés
+      </button>
     </div>
   </div>
 </div>
@@ -1259,6 +1257,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
       const isBarre = barre[a.id];
       return `
         <div class="modal-article ${isBarre ? 'barre' : ''}" id="ma-${a.id}" data-art-id="${a.id}" onpointerdown="artItemPointerDown(event,'${a.id}')" onpointerup="artItemPointerUp(event,'${a.id}')" onpointercancel="artItemCancel()" onclick="event.preventDefault()">
+          ${isBarre ? '<span style="font-size:1.1rem;flex-shrink:0">🛒</span>' : ''}
           <span class="modal-art-nom" style="text-decoration:${isBarre ? 'line-through' : 'none'}">${a.nom}</span>
           <span class="modal-art-drag" onpointerdown="artDragStart(event,'${a.id}')" onclick="event.stopPropagation()">☰</span>
         </div>`;
@@ -1266,7 +1265,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
     initArticleDrag();
   }
 
-  document.getElementById('btn-effacer-coches').style.display = 'none';
+  // btn-effacer toujours visible
   ouvrirModal('modal-courses');
 }
 
@@ -1328,6 +1327,16 @@ function toggleBarre(id) {
   const el = document.getElementById('ma-' + id);
   if (!el) return;
   el.classList.toggle('barre', barre[id]);
+  // Icône chariot
+  const existingIcon = el.querySelector('.chariot-icon');
+  if (existingIcon) existingIcon.remove();
+  if (barre[id]) {
+    const icon = document.createElement('span');
+    icon.className = 'chariot-icon';
+    icon.style.cssText = 'font-size:1.1rem;flex-shrink:0';
+    icon.textContent = '🛒';
+    el.insertBefore(icon, el.firstChild);
+  }
   const nom = el.querySelector('.modal-art-nom');
   if (nom) nom.style.textDecoration = barre[id] ? 'line-through' : '';
 
@@ -1423,24 +1432,14 @@ let enseigneCourseActive = null;
 
 function effacerCoches() {
   const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
-  const arts = articles.filter(a => a.enseigneId === ensId);
-  const coches = arts.filter(a => barre[a.id]);
-  const supprimerNonTrouves = document.getElementById('chk-non-trouves').checked;
-
-  // Supprimer les cochés
+  const coches = articles.filter(a => a.enseigneId === ensId && barre[a.id]);
+  if (coches.length === 0) return;
   coches.forEach(a => {
     articles = articles.filter(x => x.id !== a.id);
     delete barre[a.id];
   });
-
-  // Supprimer les non cochés si case cochée
-  if (supprimerNonTrouves) {
-    const autres = articles.filter(a => a.enseigneId === ensId && !barre[a.id]);
-    autres.forEach(a => { articles = articles.filter(x => x.id !== a.id); });
-  }
-
   sauvegarder();
-  fermerModal('modal-courses');
+  ouvrirCoursesEnseigne(ensId);
   render();
 }
 
@@ -1464,7 +1463,7 @@ function ajouterDepuisModal() {
 
 function annulerEffacement() {
   document.getElementById('chk-non-trouves').checked = false;
-  document.getElementById('btn-effacer-coches').style.display = 'none';
+  // btn-effacer toujours visible
 }
 function supprimerEnseigne(id) {
   enseigneASupprimer = id;
