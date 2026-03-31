@@ -769,7 +769,7 @@
     </div>
     <div id="modal-courses-liste"></div>
     <div style="display:flex;gap:8px;margin-top:12px;flex-shrink:0">
-      <input class="form-input" type="text" id="modal-cours-input" placeholder="Ajouter un produit…" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')ajouterDepuisModal()">
+      <input class="form-input" type="text" id="modal-cours-input" placeholder="Ajouter un produit…" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')ajouterDepuisModal()" onfocus="scrollInputVisible(this)">
       <button onclick="ajouterDepuisModal()" style="background:#2d2d44;color:white;border:none;border-radius:12px;padding:0 16px;font-size:1.2rem;cursor:pointer;font-weight:900">+</button>
     </div>
     <div id="btn-effacer-coches" style="margin-top:12px;text-align:center">
@@ -1438,6 +1438,12 @@ function effacerCoches() {
   sauvegarder();
   ouvrirCoursesEnseigne(ensId);
   render();
+}
+
+function scrollInputVisible(el) {
+  setTimeout(() => {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 350);
 }
 
 function ajouterDepuisModal() {
