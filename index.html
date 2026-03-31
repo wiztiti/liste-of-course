@@ -465,17 +465,11 @@
     color: #999;
     font-style: italic;
     position: relative;
-  }
-  .modal-article.barre .modal-art-nom::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: 3px;
-    background: #222;
-    border-radius: 2px;
-    transform: translateY(-50%);
+    display: inline;
+    flex: 1;
+    text-decoration: line-through;
+    text-decoration-color: #333;
+    text-decoration-thickness: 2px;
   }
   .modal-art-check {
     width: 24px;
@@ -1339,11 +1333,9 @@ function toggleBarre(id) {
   const el = document.getElementById('ma-' + id);
   if (!el) return;
   el.classList.toggle('barre', barre[id]);
-  // Icône chariot
-  const chariotIcon = el.querySelector('.chariot-icon');
-  if (chariotIcon) chariotIcon.style.display = barre[id] ? 'inline' : 'none';
-  const nom = el.querySelector('.modal-art-nom');
-  // textDecoration géré via CSS ::after
+  // Rafraîchir toute la liste pour déplacer l'article en bas
+  const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
+  ouvrirCoursesEnseigne(ensId);
 
 }
 
