@@ -222,22 +222,24 @@
   .carte-magasin .carte-logo { border: 2px solid #eee; }
   .carte-magasin {
     box-shadow:
-      0 1px 0 rgba(255,255,255,0.6) inset,
-      0 -2px 0 rgba(0,0,0,0.15) inset,
-      0 6px 0 rgba(0,0,0,0.15),
-      0 8px 16px rgba(0,0,0,0.2);
-    border-bottom: 3px solid rgba(0,0,0,0.2);
+      0 2px 0 rgba(255,255,255,0.4) inset,
+      0 -3px 0 rgba(0,0,0,0.2) inset,
+      0 8px 0 rgba(0,0,0,0.2),
+      0 12px 24px rgba(0,0,0,0.25),
+      0 2px 4px rgba(0,0,0,0.15);
+    border-bottom: 5px solid rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(255,255,255,0.4);
     transform: translateY(0);
     transition: transform 0.12s, box-shadow 0.12s;
   }
   .carte-magasin:active {
-    transform: translateY(3px);
+    transform: translateY(5px);
     box-shadow:
-      0 1px 0 rgba(255,255,255,0.6) inset,
-      0 -2px 0 rgba(0,0,0,0.15) inset,
+      0 2px 0 rgba(255,255,255,0.3) inset,
+      0 -1px 0 rgba(0,0,0,0.1) inset,
       0 2px 0 rgba(0,0,0,0.15),
-      0 3px 8px rgba(0,0,0,0.15);
-    border-bottom-width: 1px;
+      0 4px 8px rgba(0,0,0,0.15);
+    border-bottom-width: 2px;
   }
 
   /* CARTE REGLAGES */
@@ -995,7 +997,8 @@ function creerCarteMagasin(e, idx) {
   const nb = articles.filter(a => a.enseigneId === e.id).length;
   const bg = e.couleur || '#888';
   const tc = e.texteCouleur || '#fff';
-  div.style.background = bg;
+  // Générer un dégradé depuis la couleur choisie
+  div.style.background = `linear-gradient(145deg, ${bg}ee 0%, ${bg} 50%, ${bg}bb 100%)`;
   const nomHTML = (!e.logoData || e.afficherNom)
     ? `<div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${e.fontSize || 1.4}rem;letter-spacing:2px;text-transform:uppercase;color:${tc};text-align:center;line-height:1.3;text-shadow:2px 3px 6px rgba(0,0,0,0.35),0 1px 2px rgba(0,0,0,0.25);padding:0 8px;${e.logoData ? 'position:absolute;bottom:8px;left:0;right:0' : ''}">${e.nom}</div>`
     : '';
