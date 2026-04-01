@@ -763,9 +763,9 @@
 <div class="modal-overlay" id="modal-courses">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-titre" id="modal-courses-titre" onclick="fermerModal('modal-courses')" style="cursor:pointer"></div>
-    <div id="btn-fidelite-wrap" style="display:none;text-align:center;margin-bottom:8px">
-      <button onclick="ouvrirFidelite(event)" style="background:none;border:1.5px solid #ddd;border-radius:20px;padding:5px 14px;font-size:0.8rem;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;color:#555">🎫 Carte de fidélité</button>
+    <div style="display:flex;align-items:center;margin-bottom:8px;gap:8px">
+      <div class="modal-titre" id="modal-courses-titre" onclick="fermerModal('modal-courses')" style="cursor:pointer;flex:1;margin-bottom:0"></div>
+      <button id="btn-fidelite-wrap" style="display:none;background:none;border:1.5px solid #ddd;border-radius:20px;padding:5px 12px;font-size:0.8rem;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;color:#555;flex-shrink:0" onclick="ouvrirFidelite()">🎫</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-shrink:0">
       <input class="form-input" type="text" id="modal-cours-input" placeholder="Ajouter un produit…" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')ajouterDepuisModal()">
@@ -1857,9 +1857,8 @@ window.addEventListener('popstate', e => {
 
 
 // ===================== CARTE FIDÉLITÉ =====================
-function ouvrirFidelite(e) {
-  e.stopPropagation();
-  const ensId = document.getElementById('btn-fidelite-wrap').dataset.enseigneId;
+function ouvrirFidelite() {
+  const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
   const ens = enseignes.find(x => x.id === ensId);
   if (!ens || !ens.carteFidelite) return;
 
