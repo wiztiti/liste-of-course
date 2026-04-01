@@ -764,25 +764,7 @@
 <div class="modal-overlay" id="modal-courses">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div style="display:flex;flex-direction:row;align-items:center;gap:8px;margin-bottom:8px">
-      <div class="modal-titre" id="modal-courses-titre" onclick="fermerModal('modal-courses')" style="cursor:pointer;flex:1;margin-bottom:0"></div>
-      <button id="btn-fidelite-wrap" onclick="ouvrirFidelite()" style="display:none;background:white;border:none;border-radius:10px;padding:6px 10px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);flex-direction:column;align-items:center;justify-content:center;gap:2px;width:52px">
-        <div style="display:flex;gap:1px;align-items:flex-end;height:18px">
-          <div style="width:2px;height:100%;background:#222"></div>
-          <div style="width:1px;height:80%;background:#222"></div>
-          <div style="width:3px;height:100%;background:#222"></div>
-          <div style="width:1px;height:60%;background:#222"></div>
-          <div style="width:2px;height:100%;background:#222"></div>
-          <div style="width:1px;height:90%;background:#222"></div>
-          <div style="width:2px;height:100%;background:#222"></div>
-          <div style="width:1px;height:70%;background:#222"></div>
-          <div style="width:3px;height:100%;background:#222"></div>
-          <div style="width:1px;height:80%;background:#222"></div>
-          <div style="width:2px;height:100%;background:#222"></div>
-        </div>
-        <span style="font-size:0.55rem;font-family:'Nunito',sans-serif;font-weight:800;color:#555;letter-spacing:0.5px">FIDÉLITÉ</span>
-      </button>
-    </div>
+    <div id="modal-courses-titre" onclick="fermerModal('modal-courses')" style="cursor:pointer;margin-bottom:8px;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:12px 16px;position:relative"></div>
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-shrink:0">
       <input class="form-input" type="text" id="modal-cours-input" placeholder="Ajouter un produit…" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')ajouterDepuisModal()">
       <button onclick="ajouterDepuisModal()" style="background:#2d2d44;color:white;border:none;border-radius:12px;padding:0 16px;font-size:1.2rem;cursor:pointer;font-weight:900">+</button>
@@ -1290,15 +1272,23 @@ function ouvrirCoursesEnseigne(enseigneId) {
   const tc = e.texteCouleur || '#fff';
   const mtitre = document.getElementById('modal-courses-titre');
   mtitre.style.background = bg;
-  mtitre.style.borderRadius = '12px';
-  mtitre.style.padding = '12px 16px';
-  mtitre.style.marginBottom = '16px';
-  mtitre.style.justifyContent = 'center';
   mtitre.dataset.enseigneId = enseigneId;
-  mtitre.innerHTML = `<h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0">${e.nom}</h2>`;
-  const btnFid = document.getElementById('btn-fidelite-wrap');
-  if (btnFid) btnFid.style.display = e.carteFidelite ? 'flex' : 'none';
-  btnFid.dataset.enseigneId = enseigneId;
+  const barcodeBtn = e.carteFidelite ? `
+    <button onclick="ouvrirFidelite();event.stopPropagation()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:white;border:none;border-radius:8px;padding:4px 8px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);display:flex;flex-direction:column;align-items:center;gap:2px;width:48px">
+      <div style="display:flex;gap:1px;align-items:flex-end;height:16px">
+        <div style="width:2px;height:100%;background:#222"></div>
+        <div style="width:1px;height:70%;background:#222"></div>
+        <div style="width:3px;height:100%;background:#222"></div>
+        <div style="width:1px;height:60%;background:#222"></div>
+        <div style="width:2px;height:100%;background:#222"></div>
+        <div style="width:1px;height:80%;background:#222"></div>
+        <div style="width:2px;height:100%;background:#222"></div>
+        <div style="width:1px;height:70%;background:#222"></div>
+        <div style="width:3px;height:100%;background:#222"></div>
+      </div>
+      <span style="font-size:0.5rem;font-family:'Nunito',sans-serif;font-weight:800;color:#555">FIDÉLITÉ</span>
+    </button>` : '';
+  mtitre.innerHTML = `<h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0">${e.nom}</h2>${barcodeBtn}`;
 
   if (arts.length === 0) {
     document.getElementById('modal-courses-liste').innerHTML = '<div class="modal-vide">Aucun article pour ce magasin 🎉</div>';
