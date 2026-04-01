@@ -1293,10 +1293,17 @@ function ouvrirCoursesEnseigne(enseigneId) {
     document.getElementById('modal-courses-liste').innerHTML = artsTries.map(a => {
       const isBarre = barre[a.id];
       return `
-        <div class="modal-article ${isBarre ? 'barre' : ''}" id="ma-${a.id}" data-art-id="${a.id}" onpointerdown="artItemPointerDown(event,'${a.id}')" onpointerup="artItemPointerUp(event,'${a.id}')" onpointercancel="artItemCancel()" onclick="event.preventDefault()">
+        <div class="modal-article ${isBarre ? 'barre' : ''}" id="ma-${a.id}" data-art-id="${a.id}">
           <span class="chariot-icon" style="font-size:1.1rem;flex-shrink:0;display:${isBarre ? 'inline' : 'none'}">🛒</span>
-          <span class="modal-art-nom" style="">${a.nom}</span>
-          <span class="modal-art-drag" onpointerdown="artDragStart(event,'${a.id}')" onclick="event.stopPropagation()">☰</span>
+          <span class="modal-art-nom" style="flex:1;padding:6px 0" 
+            onclick="toggleBarre('${a.id}')"
+            onpointerdown="artLongStart(event,'${a.id}')"
+            onpointerup="artLongEnd()"
+            onpointercancel="artLongEnd()">${a.nom}</span>
+          <span class="modal-art-drag" 
+            onpointerdown="artDragStart(event,'${a.id}')"
+            onclick="event.stopPropagation()"
+            style="touch-action:none">☰</span>
         </div>`;
     }).join('');
     initArticleDrag();
@@ -1306,17 +1313,13 @@ function ouvrirCoursesEnseigne(enseigneId) {
   ouvrirModal('modal-courses');
 }
 
-let artLongPressId = null;
 let artLongPressTimerItem = null;
-let artDidLongPress = false;
+let artLongCurrentId = null;
 
-function artItemPointerDown(e, id) {
-  // Ignorer si c'est la poignée drag
-  if (e.target.classList.contains('modal-art-drag')) return;
-  artLongPressId = id;
-  artDidLongPress = false;
+function artLongStart(e, id) {
+  artLongCurrentId = id;
   artLongPressTimerItem = setTimeout(() => {
-    artDidLongPress = true;
+    artLongCurrentId = null;
     if (navigator.vibrate) navigator.vibrate(40);
     const a = articles.find(x => x.id === id);
     if (a) {
@@ -1327,16 +1330,9 @@ function artItemPointerDown(e, id) {
   }, 500);
 }
 
-function artItemPointerUp(e, id) {
-  if (e.target.classList.contains('modal-art-drag')) return;
+function artLongEnd() {
   clearTimeout(artLongPressTimerItem);
-  if (!artDidLongPress && !artJustDragged) toggleBarre(id);
-  artDidLongPress = false;
-}
-
-function artItemCancel() {
-  clearTimeout(artLongPressTimerItem);
-  artDidLongPress = false;
+  artLongCurrentId = null;
 }
 
 let artOptionsId = null;
