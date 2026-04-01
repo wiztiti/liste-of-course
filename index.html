@@ -1330,7 +1330,7 @@ function artItemPointerDown(e, id) {
 function artItemPointerUp(e, id) {
   if (e.target.classList.contains('modal-art-drag')) return;
   clearTimeout(artLongPressTimerItem);
-  if (!artDidLongPress) toggleBarre(id);
+  if (!artDidLongPress && !artJustDragged) toggleBarre(id);
   artDidLongPress = false;
 }
 
@@ -1669,6 +1669,7 @@ let artDragClone = null;
 let artDragStartY = 0;
 let artLongPressTimer = null;
 let artDragActive = false;
+let artJustDragged = false;
 
 function initArticleDrag() {
   // Rien à faire, les events sont inline sur les poignées
@@ -1779,8 +1780,14 @@ function artDragEnd(e) {
       articles = [...otherArts, ...ensArts];
       sauvegarder();
       ouvrirCoursesEnseigne(ensId);
+      // Scroller pour rendre visible l'article déplacé
+      setTimeout(() => {
+        const el = document.getElementById('ma-' + artDragSrcId);
+        if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }, 50);
     }
   }
+  if (artDragActive) { artJustDragged = true; setTimeout(() => { artJustDragged = false; }, 300); }
   artDragSrcId = null;
   artDragEl = null;
 }
