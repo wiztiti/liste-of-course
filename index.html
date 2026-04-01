@@ -912,7 +912,6 @@
 <div id="modal-fidelite" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:20px" onclick="fermerFidelite()">
   <div id="fidelite-nom" style="font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#333"></div>
   <canvas id="fidelite-canvas" style="max-width:90vw"></canvas>
-  <div id="fidelite-numero" style="font-size:0.9rem;color:#888;letter-spacing:1px"></div>
   <div style="font-size:0.8rem;color:#ccc;margin-top:10px">Toucher pour fermer</div>
 </div>
 
@@ -1835,6 +1834,13 @@ function pushModalState() {
 }
 
 window.addEventListener('popstate', e => {
+  // Fermer modal fidélité si visible
+  const mf = document.getElementById('modal-fidelite');
+  if (mf && mf.style.display === 'flex') {
+    fermerFidelite();
+    history.pushState({ modal: true }, '');
+    return;
+  }
   // Si un modal est ouvert, le fermer
   const modals = ['modal-courses', 'modal-edit-enseigne', 'modal-edit-article',
                   'modal-confirm-suppr', 'modal-art-options', 'modal-choix'];
@@ -1863,8 +1869,6 @@ function ouvrirFidelite() {
   if (!ens || !ens.carteFidelite) return;
 
   document.getElementById('fidelite-nom').textContent = ens.nom;
-  document.getElementById('fidelite-numero').textContent = ens.carteFidelite;
-
   const canvas = document.getElementById('fidelite-canvas');
   if (ens.carteType === 'qrcode') {
     dessinerQR(canvas, ens.carteFidelite);
@@ -1874,6 +1878,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
+  history.pushState({ modal: true }, '');
 
   // Luminosité max
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
