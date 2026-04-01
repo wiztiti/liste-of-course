@@ -1860,8 +1860,7 @@ window.addEventListener('popstate', e => {
 function ouvrirFidelite() {
   const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
   const ens = enseignes.find(x => x.id === ensId);
-  if (!ens) { alert('Enseigne non trouvée'); return; }
-  if (!ens.carteFidelite) { alert('Pas de carte pour: ' + ens.nom); return; }
+  if (!ens || !ens.carteFidelite) return;
 
   document.getElementById('fidelite-nom').textContent = ens.nom;
   document.getElementById('fidelite-numero').textContent = ens.carteFidelite;
@@ -2146,7 +2145,8 @@ function encodeCode128(str) {
     bits = bits.concat(toBits(C[v]));
   }
   bits = bits.concat(toBits(C[check % 103]));
-  bits = bits.concat(toBits(C[106])); // stop pattern
+  // Pattern stop Code128 fixe
+  bits = bits.concat(toBits([2,3,3,1,1,1,2]));
   bits.push(1, 1); // termination bar
   return bits;
 }
