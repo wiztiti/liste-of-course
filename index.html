@@ -765,7 +765,7 @@
     <div class="modal-handle"></div>
     <div style="display:flex;align-items:center;margin-bottom:8px;gap:8px">
       <div class="modal-titre" id="modal-courses-titre" onclick="fermerModal('modal-courses')" style="cursor:pointer;flex:1;margin-bottom:0"></div>
-      <button id="btn-fidelite-wrap" style="display:none;background:none;border:1.5px solid #ddd;border-radius:20px;padding:5px 12px;font-size:0.8rem;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;color:#555;flex-shrink:0" onclick="ouvrirFidelite()">🎫</button>
+      <button id="btn-fidelite-wrap" style="display:none;background:none;border:1.5px solid #ddd;border-radius:20px;padding:5px 12px;font-size:0.8rem;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;color:#555;flex-shrink:0;min-width:36px;min-height:36px" onclick="ouvrirFidelite()">🎫</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-shrink:0">
       <input class="form-input" type="text" id="modal-cours-input" placeholder="Ajouter un produit…" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')ajouterDepuisModal()">
@@ -1282,7 +1282,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
   mtitre.dataset.enseigneId = enseigneId;
   mtitre.innerHTML = `<h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0">${e.nom}</h2>`;
   const btnFid = document.getElementById('btn-fidelite-wrap');
-  if (btnFid) btnFid.style.display = e.carteFidelite ? 'block' : 'none';
+  if (btnFid) btnFid.style.display = e.carteFidelite ? 'inline-flex' : 'none';
   btnFid.dataset.enseigneId = enseigneId;
 
   if (arts.length === 0) {
@@ -1860,7 +1860,8 @@ window.addEventListener('popstate', e => {
 function ouvrirFidelite() {
   const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
   const ens = enseignes.find(x => x.id === ensId);
-  if (!ens || !ens.carteFidelite) return;
+  if (!ens) { alert('Enseigne non trouvée'); return; }
+  if (!ens.carteFidelite) { alert('Pas de carte pour: ' + ens.nom); return; }
 
   document.getElementById('fidelite-nom').textContent = ens.nom;
   document.getElementById('fidelite-numero').textContent = ens.carteFidelite;
