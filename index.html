@@ -764,6 +764,9 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-titre" id="modal-courses-titre" onclick="fermerModal('modal-courses')" style="cursor:pointer"></div>
+    <div id="btn-fidelite-wrap" style="display:none;text-align:center;margin-bottom:8px">
+      <button onclick="ouvrirFidelite(event)" style="background:none;border:1.5px solid #ddd;border-radius:20px;padding:5px 14px;font-size:0.8rem;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;color:#555">🎫 Carte de fidélité</button>
+    </div>
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-shrink:0">
       <input class="form-input" type="text" id="modal-cours-input" placeholder="Ajouter un produit…" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')ajouterDepuisModal()">
       <button onclick="ajouterDepuisModal()" style="background:#2d2d44;color:white;border:none;border-radius:12px;padding:0 16px;font-size:1.2rem;cursor:pointer;font-weight:900">+</button>
@@ -886,10 +889,31 @@
       </label>
     </div>
 
+    <div class="form-group">
+      <label class="form-label">Carte de fidélité</label>
+      <input class="form-input" type="text" id="edit-carte-fidelite" placeholder="Numéro de carte…" inputmode="text">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#555;cursor:pointer">
+          <input type="radio" name="edit-carte-type" value="barcode" checked> Code-barres
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#555;cursor:pointer">
+          <input type="radio" name="edit-carte-type" value="qrcode"> QR Code
+        </label>
+      </div>
+    </div>
+
     <div class="sep"></div>
     <button class="btn-valider" onclick="validerEnseigneEdit()">Enregistrer</button>
     <button class="btn-modal-fermer" style="background:#f0f0f0;color:#555;margin-top:8px" onclick="fermerModal('modal-edit-enseigne')">Annuler</button>
   </div>
+</div>
+
+<!-- MODAL CARTE FIDELITE -->
+<div id="modal-fidelite" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:20px" onclick="fermerFidelite()">
+  <div id="fidelite-nom" style="font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#333"></div>
+  <canvas id="fidelite-canvas" style="max-width:90vw"></canvas>
+  <div id="fidelite-numero" style="font-size:0.9rem;color:#888;letter-spacing:1px"></div>
+  <div style="font-size:0.8rem;color:#ccc;margin-top:10px">Toucher pour fermer</div>
 </div>
 
 <script>
@@ -969,7 +993,9 @@ let enseignes = raw_enseignes.map(e => ({
   texteCouleur: e.texteCouleur || '#ffffff',
   fontSize: e.fontSize || 1.4,
   logoData: e.logoData || null,
-  afficherNom: e.afficherNom || false
+  afficherNom: e.afficherNom || false,
+  carteFidelite: e.carteFidelite || '',
+  carteType: e.carteType || 'barcode'
 }));
 let articles = charger('mc_articles', DEFAUT_ARTICLES);
 let ordreMagasins = charger('mc_ordre', enseignes.map(e => e.id));
@@ -984,6 +1010,8 @@ let editTexteCouleur = '#ffffff';
 let editFontSize = 1.4;
 let editLogoData = null;
 let editAfficherNom = false;
+let editCarteFidelite = '';
+let editCarteType = 'barcode';
 let editLogoOpt = 'lettre';
 let editLogoBase64 = null;
 
@@ -1253,6 +1281,9 @@ function ouvrirCoursesEnseigne(enseigneId) {
   mtitre.style.justifyContent = 'center';
   mtitre.dataset.enseigneId = enseigneId;
   mtitre.innerHTML = `<h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0">${e.nom}</h2>`;
+  const btnFid = document.getElementById('btn-fidelite-wrap');
+  if (btnFid) btnFid.style.display = e.carteFidelite ? 'block' : 'none';
+  btnFid.dataset.enseigneId = enseigneId;
 
   if (arts.length === 0) {
     document.getElementById('modal-courses-liste').innerHTML = '<div class="modal-vide">Aucun article pour ce magasin 🎉</div>';
@@ -1381,6 +1412,8 @@ function editEnseigne(id) {
     editFontSize = e.fontSize || 1.4;
     editLogoData = e.logoData || null;
     editAfficherNom = e.afficherNom || false;
+    editCarteFidelite = e.carteFidelite || '';
+    editCarteType = e.carteType || 'barcode';
   } else {
     document.getElementById('modal-edit-titre').textContent = 'Nouvelle enseigne';
     document.getElementById('edit-nom').value = '';
@@ -1389,6 +1422,8 @@ function editEnseigne(id) {
     editFontSize = 1.4;
     editLogoData = null;
     editAfficherNom = false;
+    editCarteFidelite = '';
+    editCarteType = 'barcode';
   }
 
   // Swatches fond
@@ -1408,6 +1443,11 @@ function editEnseigne(id) {
     majApercuLogo();
     const chk = document.getElementById('chk-afficher-nom');
     if (chk) chk.checked = editAfficherNom;
+    const cf = document.getElementById('edit-carte-fidelite');
+    if (cf) cf.value = editCarteFidelite;
+    document.querySelectorAll('input[name="edit-carte-type"]').forEach(r => {
+      r.checked = r.value === editCarteType;
+    });
     // Remplir les suggestions
     const sg = document.getElementById('enseignes-suggerees');
     if (sg) {
@@ -1603,12 +1643,16 @@ function validerEnseigneEdit() {
     const idx = enseignes.findIndex(e => e.id === editEnseigneId);
     if (idx > -1) {
       const afficherNom = document.getElementById('chk-afficher-nom').checked;
-      enseignes[idx] = { ...enseignes[idx], nom, couleur: editCouleurSelectionnee, texteCouleur: editTexteCouleur, fontSize, logoData: editLogoData, afficherNom };
+      const carteFidelite = document.getElementById('edit-carte-fidelite').value.trim();
+      const carteType = document.querySelector('input[name="edit-carte-type"]:checked')?.value || 'barcode';
+      enseignes[idx] = { ...enseignes[idx], nom, couleur: editCouleurSelectionnee, texteCouleur: editTexteCouleur, fontSize, logoData: editLogoData, afficherNom, carteFidelite, carteType };
     }
   } else {
     const newId = 'e' + Date.now();
     const afficherNom2 = document.getElementById('chk-afficher-nom').checked;
-    enseignes.push({ id: newId, nom, couleur: editCouleurSelectionnee, texteCouleur: editTexteCouleur, fontSize, logoData: editLogoData, afficherNom: afficherNom2 });
+    const carteFidelite2 = document.getElementById('edit-carte-fidelite').value.trim();
+    const carteType2 = document.querySelector('input[name="edit-carte-type"]:checked')?.value || 'barcode';
+    enseignes.push({ id: newId, nom, couleur: editCouleurSelectionnee, texteCouleur: editTexteCouleur, fontSize, logoData: editLogoData, afficherNom: afficherNom2, carteFidelite: carteFidelite2, carteType: carteType2 });
     ordreMagasins.push(newId);
   }
   sauvegarder();
@@ -1806,6 +1850,297 @@ window.addEventListener('popstate', e => {
     return;
   }
 });
+
+
+// ===================== CARTE FIDÉLITÉ =====================
+function ouvrirFidelite(e) {
+  e.stopPropagation();
+  const ensId = document.getElementById('btn-fidelite-wrap').dataset.enseigneId;
+  const ens = enseignes.find(x => x.id === ensId);
+  if (!ens || !ens.carteFidelite) return;
+
+  document.getElementById('fidelite-nom').textContent = ens.nom;
+  document.getElementById('fidelite-numero').textContent = ens.carteFidelite;
+
+  const canvas = document.getElementById('fidelite-canvas');
+  if (ens.carteType === 'qrcode') {
+    dessinerQR(canvas, ens.carteFidelite);
+  } else {
+    dessinerBarcode(canvas, ens.carteFidelite);
+  }
+
+  const modal = document.getElementById('modal-fidelite');
+  modal.style.display = 'flex';
+
+  // Luminosité max
+  try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
+}
+
+function fermerFidelite() {
+  document.getElementById('modal-fidelite').style.display = 'none';
+}
+
+
+// ===================== QR CODE HORS LIGNE =====================
+// Algorithme QR Code minimal (version 1-10, mode byte, niveau L)
+const QR = (() => {
+  const GF = 256, PRIM = 0x11d;
+  const gfExp = new Uint8Array(512), gfLog = new Uint8Array(256);
+  let x = 1;
+  for (let i = 0; i < 255; i++) {
+    gfExp[i] = x; gfLog[x] = i;
+    x <<= 1; if (x & 256) x ^= PRIM;
+  }
+  for (let i = 255; i < 512; i++) gfExp[i] = gfExp[i - 255];
+
+  const mul = (a, b) => a && b ? gfExp[gfLog[a] + gfLog[b]] : 0;
+  const polyMul = (p, q) => {
+    const r = new Uint8Array(p.length + q.length - 1);
+    for (let i = 0; i < p.length; i++)
+      for (let j = 0; j < q.length; j++)
+        r[i+j] ^= mul(p[i], q[j]);
+    return r;
+  };
+  const polyDiv = (msg, gen) => {
+    let r = new Uint8Array(msg);
+    for (let i = 0; i < msg.length - gen.length + 1; i++) {
+      const c = r[i];
+      if (c) for (let j = 1; j < gen.length; j++) r[i+j] ^= mul(gen[j], c);
+    }
+    return r.slice(msg.length - gen.length + 1);
+  };
+  const rsGen = (nsym) => {
+    let g = new Uint8Array([1]);
+    for (let i = 0; i < nsym; i++) g = polyMul(g, new Uint8Array([1, gfExp[i]]));
+    return g;
+  };
+  const rsEncode = (msg, nsym) => {
+    const gen = rsGen(nsym);
+    const ext = new Uint8Array(msg.length + nsym);
+    ext.set(msg);
+    return polyDiv(ext, gen);
+  };
+
+  // QR version info
+  const VERSIONS = [
+    null,
+    {size:21,ec:{L:{blocks:1,data:19,ec:7}}},
+    {size:25,ec:{L:{blocks:1,data:34,ec:10}}},
+    {size:29,ec:{L:{blocks:1,data:55,ec:15}}},
+    {size:33,ec:{L:{blocks:1,data:80,ec:20}}},
+    {size:37,ec:{L:{blocks:1,data:108,ec:26}}},
+    {size:41,ec:{L:{blocks:2,data:136,ec:18}}},
+    {size:45,ec:{L:{blocks:2,data:156,ec:20}}},
+    {size:49,ec:{L:{blocks:2,data:194,ec:24}}},
+    {size:53,ec:{L:{blocks:2,data:232,ec:30}}},
+    {size:57,ec:{L:{blocks:4,data:274,ec:18}}},
+  ];
+
+  const ALIGN = [null,[],[[6,18]],[[6,22]],[[6,26]],[[6,30]],[[6,34]],[[6,22,38]],[[6,24,42]],[[6,26,46]],[[6,28,50]]];
+
+  function pickVersion(dataLen) {
+    for (let v = 1; v <= 10; v++) {
+      if (VERSIONS[v].ec.L.data >= dataLen + 4) return v;
+    }
+    throw new Error('Données trop longues');
+  }
+
+  function encode(text) {
+    const bytes = [...text].map(c => c.charCodeAt(0) & 0xFF);
+    const version = pickVersion(bytes.length);
+    const info = VERSIONS[version].ec.L;
+    const size = VERSIONS[version].size;
+
+    // Bitstream
+    const bits = [];
+    const add = (val, n) => { for (let i = n-1; i >= 0; i--) bits.push((val >> i) & 1); };
+    add(0b0100, 4); // mode byte
+    add(bytes.length, 8);
+    bytes.forEach(b => add(b, 8));
+    add(0, 4); // terminator
+    while (bits.length % 8) bits.push(0);
+    const PADS = [0xEC, 0x11];
+    let pi = 0;
+    while (bits.length < info.data * 8) { add(PADS[pi], 8); pi = 1 - pi; }
+
+    // Data bytes
+    const data = [];
+    for (let i = 0; i < bits.length; i += 8) {
+      let b = 0;
+      for (let j = 0; j < 8; j++) b = (b << 1) | (bits[i+j] || 0);
+      data.push(b);
+    }
+
+    // EC per block
+    const blockSize = Math.floor(info.data / info.blocks);
+    const allData = [], allEc = [];
+    for (let b = 0; b < info.blocks; b++) {
+      const block = data.slice(b * blockSize, (b+1) * blockSize);
+      allData.push(block);
+      allEc.push([...rsEncode(new Uint8Array(block), info.ec)]);
+    }
+    const interleaved = [];
+    for (let i = 0; i < allData[0].length; i++) allData.forEach(b => b[i] !== undefined && interleaved.push(b[i]));
+    for (let i = 0; i < allEc[0].length; i++) allEc.forEach(b => b[i] !== undefined && interleaved.push(b[i]));
+
+    // Final bitstream
+    const finalBits = [];
+    interleaved.forEach(b => { for (let i = 7; i >= 0; i--) finalBits.push((b >> i) & 1); });
+    while (finalBits.length % 8) finalBits.push(0);
+
+    // Build matrix
+    const mat = Array.from({length: size}, () => new Array(size).fill(-1));
+    const set = (r, c, v) => { if (r >= 0 && r < size && c >= 0 && c < size) mat[r][c] = v; };
+
+    // Finder patterns
+    const finder = (r, c) => {
+      for (let i = -1; i <= 7; i++) for (let j = -1; j <= 7; j++) {
+        const v = i < 0 || i > 6 || j < 0 || j > 6 ? 0 :
+                  i === 0 || i === 6 || j === 0 || j === 6 ? 1 :
+                  i >= 2 && i <= 4 && j >= 2 && j <= 4 ? 1 : 0;
+        set(r+i, c+j, v);
+      }
+    };
+    finder(0,0); finder(0,size-7); finder(size-7,0);
+
+    // Timing
+    for (let i = 8; i < size-8; i++) { set(6,i,i%2===0?1:0); set(i,6,i%2===0?1:0); }
+
+    // Dark module
+    set(4*version+9, 8, 1);
+
+    // Alignment patterns
+    if (ALIGN[version]) {
+      ALIGN[version].forEach(pos => {
+        pos.forEach(r => pos.forEach(c => {
+          if (mat[r][c] === -1) {
+            for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
+              set(r+i, c+j, (Math.abs(i)===2||Math.abs(j)===2||(!i&&!j))?1:0);
+            }
+          }
+        }));
+      });
+    }
+
+    // Format info (mask 0, L)
+    const FORMAT = [0b111011111000100, 0b111001011110011, 0b111110110101010, 0b111100010011101,
+                    0b110011000101111, 0b110001100011000, 0b110110001000001, 0b110100101110110];
+    const fmt = FORMAT[0];
+    const fmtBits = i => (fmt >> (14-i)) & 1;
+    for (let i = 0; i < 6; i++) { set(8, i, fmtBits(i)); set(i, 8, fmtBits(i)); }
+    set(8,7,fmtBits(6)); set(7,8,fmtBits(6));
+    set(8,8,fmtBits(7)); set(8,size-8,fmtBits(8));
+    for (let i = 0; i < 7; i++) { set(8,size-7+i,fmtBits(9+i)); set(size-7+i,8,fmtBits(9+i)); }
+
+    // Data placement
+    const reserved = (r,c) => mat[r][c] !== -1;
+    let bit = 0;
+    for (let col = size-1; col >= 0; col -= 2) {
+      if (col === 6) col--;
+      for (let row = 0; row < size; row++) {
+        const r = (Math.floor(col/2) % 2 === 0) ? (size-1-row) : row;
+        for (let dc = 0; dc <= 1; dc++) {
+          const c = col - dc;
+          if (!reserved(r,c)) {
+            const b = finalBits[bit++] || 0;
+            mat[r][c] = b ^ ((r+c) % 2 === 0 ? 1 : 0); // mask 0
+          }
+        }
+      }
+    }
+
+    return mat;
+  }
+
+  return { encode };
+})();
+
+function dessinerQR(canvas, text) {
+  let mat;
+  try { mat = QR.encode(text); }
+  catch(e) {
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.height = 200;
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,200,200);
+    ctx.fillStyle='#c00'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Texte trop long', 100, 100);
+    return;
+  }
+  const s = mat.length;
+  const cell = Math.floor(Math.min(window.innerWidth * 0.75, 300) / (s + 8));
+  const quiet = cell * 4;
+  canvas.width = canvas.height = s * cell + quiet * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#000';
+  for (let r = 0; r < s; r++)
+    for (let c = 0; c < s; c++)
+      if (mat[r][c]) ctx.fillRect(quiet + c*cell, quiet + r*cell, cell, cell);
+}
+
+
+// ---- Code-barres Code128 ----
+function dessinerBarcode(canvas, text) {
+  const encoded = encodeCode128(text);
+  const barW = 2;
+  const h = 120;
+  const quiet = 20;
+  canvas.width = encoded.length * barW + quiet * 2;
+  canvas.height = h + 40;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#000';
+  encoded.forEach((bit, i) => {
+    if (bit === 1) ctx.fillRect(quiet + i * barW, 10, barW, h);
+  });
+  ctx.font = '14px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, canvas.width / 2, h + 28);
+}
+
+function encodeCode128(str) {
+  const CODE128B = [
+    [2,1,1,4,1,1],[2,2,1,4,1,1],[2,3,1,4,1,1],[1,4,1,2,1,3],[1,4,1,3,1,2],
+    [1,3,1,2,1,4],[1,2,1,4,1,3],[1,1,1,4,1,3],[1,2,1,3,1,4],[1,1,1,3,1,4],
+    [3,1,1,2,1,4],[3,2,1,2,1,4],[3,4,1,1,1,2],[3,4,1,2,1,1],[3,2,1,1,1,4],
+    [3,1,1,4,1,2],[3,2,1,4,1,1],[3,1,1,2,1,4],[3,1,1,2,3,1],[3,1,3,2,1,1],
+    [2,1,3,2,3,1],[2,3,3,1,1,2],[2,3,1,1,3,2],[2,1,3,4,1,1],[2,3,1,4,1,1],
+    [1,1,4,2,1,3],[1,1,4,3,1,2],[1,3,4,1,1,2],[1,3,4,2,1,1],[1,1,4,1,1,3],
+    [1,1,4,1,3,1],[1,3,4,1,3,1],[4,1,1,1,1,3],[4,1,1,3,1,1],[4,3,1,1,1,1],
+    [4,1,3,1,1,1],[3,1,4,1,3,1],[3,1,1,1,4,1],[1,4,1,1,4,1],[4,1,4,1,1,1],
+    [2,1,2,1,4,2],[2,1,4,1,2,2],[4,1,2,1,2,2],[4,1,2,2,2,1],[4,2,2,1,2,1],
+    [2,1,2,2,4,1],[2,1,4,2,2,1],[2,2,4,1,2,1],[1,1,1,2,2,4],[1,1,1,4,2,2],
+    [1,2,1,1,2,4],[1,2,1,4,2,1],[1,4,2,1,1,2],[1,4,2,2,1,1],[1,1,2,2,1,4],
+    [1,1,2,4,1,2],[1,2,2,1,1,4],[1,2,2,4,1,1],[1,4,1,2,2,1],[1,4,2,1,2,1],
+    [2,4,1,2,1,1],[2,2,1,1,1,4],[4,1,1,2,1,2],[1,1,2,1,4,2],[1,2,4,1,1,2],
+    [1,2,2,1,4,1],[1,1,4,2,2,1],[3,3,1,1,2,1],[3,1,2,1,3,1],[2,1,1,3,3,1],
+    [1,3,3,1,2,1],[2,3,1,3,1,1],[2,1,3,1,3,1],[3,1,2,3,1,1],[3,3,2,1,1,1],
+    [3,1,4,1,1,1],[2,2,1,3,1,2],[2,2,3,1,1,2],[2,1,1,1,2,3],[1,1,1,1,4,3],
+    [1,3,1,1,4,1],[1,1,1,3,4,1],[3,1,1,1,2,3],[1,1,3,3,2,1],[3,1,3,3,2,1],
+    [3,3,3,1,2,1],[3,3,1,3,2,1],[1,1,2,1,2,4],[1,2,1,1,4,2]
+  ];
+  const START_B = 104;
+  const STOP = [2,3,3,1,1,1,2];
+
+  const toPattern = (bars) => {
+    let bits = [];
+    bars.forEach((w, i) => { for(let j=0;j<w;j++) bits.push(i%2===0?1:0); });
+    return bits;
+  };
+
+  let bits = toPattern(CODE128B[START_B]);
+  let checksum = START_B;
+  str.split('').forEach((c, i) => {
+    const code = c.charCodeAt(0) - 32;
+    checksum += (i+1) * code;
+    bits = bits.concat(toPattern(CODE128B[code]));
+  });
+  bits = bits.concat(toPattern(CODE128B[checksum % 103]));
+  bits = bits.concat(toPattern(STOP));
+  bits.push(1, 1); // stop terminator
+  return bits;
+}
 
 // ===================== MODAUX =====================
 function ouvrirModal(id) {
