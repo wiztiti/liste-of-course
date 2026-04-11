@@ -1419,8 +1419,6 @@ function editEnseigne(id) {
   setTimeout(() => {
     majApercu();
     majApercuLogo();
-    const chk = document.getElementById('chk-afficher-nom');
-    if (chk) chk.checked = editAfficherNom;
     const cf = document.getElementById('edit-carte-fidelite');
     if (cf) cf.value = editCarteFidelite;
     document.querySelectorAll('input[name="edit-carte-type"]').forEach(r => {
