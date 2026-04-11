@@ -1067,6 +1067,8 @@ function renderEnseignes() {
 let ongletActif = 'courses';
 function switchTab(tab) {
   ongletActif = tab;
+  if (tab !== 'courses') history.pushState({ niveau: 1 }, '');
+  else history.replaceState({ niveau: 0 }, '');
   ['courses','liste','enseignes'].forEach(t => {
     document.getElementById('page-' + t).style.display = t === tab ? 'block' : 'none';
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
@@ -1199,7 +1201,7 @@ function toggleCarte(type) {
     carteOuverte = null;
   } else {
     carteOuverte = type;
-    history.pushState({ modal: true }, '');
+    history.pushState({ niveau: 1 }, '');
   }
   render();
   if (carteOuverte) {
@@ -1839,32 +1841,40 @@ function pushModalState() {
   history.pushState({ modal: true }, '');
 }
 
+// Pousser l'état initial au chargement
+history.replaceState({ niveau: 0 }, '');
+
 window.addEventListener('popstate', e => {
-  // Fermer modal fidélité si visible
+  const niveau = e.state && e.state.niveau || 0;
+
+  // Niveau 2 : modal fidélité
   const mf = document.getElementById('modal-fidelite');
   if (mf && mf.style.display === 'flex') {
     fermerFidelite();
-    history.pushState({ modal: true }, '');
+    history.replaceState({ niveau: 1 }, '');
     return;
   }
-  // Si un modal est ouvert, le fermer
+
+  // Niveau 2 : modal ouvert
   const modals = ['modal-courses', 'modal-edit-enseigne', 'modal-edit-article',
                   'modal-confirm-suppr', 'modal-art-options', 'modal-choix'];
   for (const id of modals) {
     const el = document.getElementById(id);
     if (el && el.classList.contains('visible')) {
       fermerModal(id);
-      history.pushState({ modal: true }, '');
+      history.replaceState({ niveau: 1 }, '');
       return;
     }
   }
-  // Si une carte est ouverte (liste ou réglages), la fermer
-  if (carteOuverte) {
-    carteOuverte = null;
-    render();
-    history.pushState({ modal: true }, '');
+
+  // Niveau 1 : onglet secondaire → revenir à courses
+  if (ongletActif !== 'courses') {
+    switchTab('courses');
+    history.replaceState({ niveau: 0 }, '');
     return;
   }
+
+  // Niveau 0 : on est sur la page principale → laisser quitter
 });
 
 
@@ -1884,7 +1894,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  history.pushState({ modal: true }, '');
+  history.pushState({ niveau: 2 }, '');
 
   // Luminosité max
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
@@ -2165,7 +2175,7 @@ function encodeCode128(str) {
 // ===================== MODAUX =====================
 function ouvrirModal(id) {
   document.getElementById(id).classList.add('visible');
-  history.pushState({ modal: true }, '');
+  history.pushState({ niveau: 2 }, '');
 }
 function fermerModal(id) {
   document.getElementById(id).classList.remove('visible');
