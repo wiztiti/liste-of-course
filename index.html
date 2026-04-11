@@ -27,7 +27,7 @@
   body {
     font-family: 'Nunito', sans-serif;
     min-height: 100dvh;
-    background: #f2f2f2;
+    background: #ffffff;
     padding: 0;
     touch-action: pan-y;
     display: flex;
@@ -1135,12 +1135,12 @@ function creerCarteMagasin(e, idx) {
   const hexToRgb = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
   const rgb = hexToRgb(bg);
   div.style.cssText = `
-    background: linear-gradient(135deg, rgba(${rgb},0.1) 0%, rgba(${rgb},0.03) 50%, rgba(${rgb},0.1) 100%);
-    border-left: 5px solid ${bg};
+    background: linear-gradient(135deg, rgba(${rgb},0.18) 0%, rgba(${rgb},0.07) 50%, rgba(${rgb},0.18) 100%);
+    border-left: 6px solid ${bg};
     border-right: 5px solid ${bg};
     border-top: none;
     border-bottom: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
     border-radius: 14px;
   `;
   const fs = e.nom.length > 12 ? 1.0 : e.nom.length > 8 ? 1.15 : 1.3;
