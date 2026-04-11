@@ -1221,23 +1221,11 @@ function ajouterArticle() {
   const nom = input.value.trim();
   if (!nom) return;
   articles.push({ id: 'a' + Date.now(), nom, enseigneId: sel.value });
-  sauvegarder();
   input.value = '';
   input.focus();
-  // Mise à jour partielle
-  document.getElementById('liste-articles').innerHTML = renderArticles();
-  // Mettre à jour badge
-  const badge = document.querySelector('#carte-liste .badge');
-  const total = articles.length;
-  if (badge) badge.textContent = total;
-  else if (total > 0) {
-    const h = document.querySelector('#carte-liste .carte-header');
-    const b = document.createElement('div');
-    b.className = 'badge';
-    b.textContent = total;
-    h.appendChild(b);
-  }
-  render();
+  sauvegarder();
+  renderCourses();
+  renderListe();
 }
 
 function supprimerArticle(id) {
@@ -1867,14 +1855,14 @@ window.addEventListener('popstate', e => {
     }
   }
 
-  // Niveau 1 : onglet secondaire → revenir à courses
+  // Si pas sur l'onglet courses → y revenir
   if (ongletActif !== 'courses') {
     switchTab('courses');
     history.replaceState({ niveau: 0 }, '');
     return;
   }
 
-  // Niveau 0 : on est sur la page principale → laisser quitter
+  // Sur courses → laisser quitter l'app
 });
 
 
