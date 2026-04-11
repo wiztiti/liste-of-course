@@ -967,7 +967,7 @@ let enseignes = raw_enseignes.map(e => ({
   id: e.id,
   nom: e.nom,
   couleur: e.couleur || '#888888',
-  texteCouleur: e.texteCouleur || '#ffffff',
+  texteCouleur: (e.texteCouleur === '#ffffff' || e.texteCouleur === '#fff') ? (e.couleur || '#333333') : (e.texteCouleur || e.couleur || '#333333'),
   fontSize: e.fontSize || 1.4,
   logoData: e.logoData || null,
   afficherNom: e.afficherNom || false,
@@ -1067,7 +1067,7 @@ function logoHTML(e, size = 56, radius = 14) {
   // Initiale stylisée
   const lettre = (e.lettre || e.nom[0] || '?').toUpperCase();
   const bg = e.couleur || '#888';
-  const tc = e.texteCouleur || '#fff';
+  const tc = e.texteCouleur || e.couleur || '#333';
   const fontSize = Math.round(size * 0.45);
   const fs = e.fontSize || 1.4;
   return `<div class="carte-logo" style="width:${size}px;height:${size}px;border-radius:${radius}px;background:${bg}"></div>`;
@@ -1125,6 +1125,7 @@ function creerCarteMagasin(e, idx) {
   div.setAttribute('draggable', 'true');
   const nb = articles.filter(a => a.enseigneId === e.id).length;
   const bg = e.couleur || '#888888';
+  const tc = e.texteCouleur || e.couleur || '#333';
   const hexToRgb = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
   const rgb = hexToRgb(bg);
   div.style.cssText = `
@@ -1139,7 +1140,7 @@ function creerCarteMagasin(e, idx) {
   const fs = e.nom.length > 12 ? 1.0 : e.nom.length > 8 ? 1.15 : 1.3;
   div.innerHTML = `
     <div class="carte-header" style="background:transparent;min-height:60px;flex-direction:row;align-items:center;padding:0 16px;justify-content:space-between" onclick="ouvrirCoursesEnseigne('${e.id}')">
-      <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${fs}rem;letter-spacing:2px;text-transform:uppercase;color:${bg}">${e.nom}</span>
+      <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${fs}rem;letter-spacing:2px;text-transform:uppercase;color:${tc}">${e.nom}</span>
       ${nb > 0 ? `<span style="background:#f0f0f0;color:#555;font-size:0.75rem;font-weight:800;padding:3px 10px;border-radius:20px;flex-shrink:0">${nb}</span>` : ''}
     </div>
   `;
@@ -1164,12 +1165,13 @@ function creerCarteReglages() {
 
 function creerEnseigneRowHTML(e) {
   const bg = e.couleur || '#888';
+  const tc = e.texteCouleur || e.couleur || '#333';
   const hexToRgb = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
   const rgb = hexToRgb(bg);
   const fs = e.nom.length > 12 ? 1.0 : e.nom.length > 8 ? 1.15 : 1.3;
   return `
     <div class="enseigne-row" style="background:linear-gradient(135deg,rgba(${rgb},0.18) 0%,rgba(${rgb},0.07) 50%,rgba(${rgb},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);display:flex;align-items:center;padding:0 16px;min-height:56px;margin-bottom:8px;position:relative">
-      <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${fs}rem;letter-spacing:2px;text-transform:uppercase;color:${bg};flex:1">${e.nom}</span>
+      <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${fs}rem;letter-spacing:2px;text-transform:uppercase;color:${tc};flex:1">${e.nom}</span>
       <div style="display:flex;gap:4px;flex-shrink:0">
         <button class="btn-small btn-edit" onclick="editEnseigne('${e.id}');event.stopPropagation()" style="background:#f0f0f0;color:#555;border:none;border-radius:8px;padding:4px 8px">✏️</button>
         <button class="btn-small btn-suppr-e" onclick="supprimerEnseigne('${e.id}');event.stopPropagation()" style="background:#f0f0f0;color:#555;border:none;border-radius:8px;padding:4px 8px">✕</button>
@@ -1230,7 +1232,7 @@ function ouvrirChoixEnseigne() {
     return `
       <button class="enseigne-choix-btn" onclick="ouvrirCoursesEnseigne('${e.id}');fermerModal('modal-choix')"
         style="background:linear-gradient(135deg,rgba(${rgb},0.18) 0%,rgba(${rgb},0.07) 50%,rgba(${rgb},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;padding:0 16px;min-height:56px;width:100%;margin-bottom:8px">
-        <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${fs}rem;letter-spacing:2px;text-transform:uppercase;color:${bg}">${e.nom}</span>
+        <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${fs}rem;letter-spacing:2px;text-transform:uppercase;color:${tc}">${e.nom}</span>
         <span style="background:#f0f0f0;color:#555;font-size:0.75rem;font-weight:800;padding:3px 10px;border-radius:20px">${nb}</span>
       </button>`;
   }).join('');
@@ -1244,7 +1246,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
 
   // titre
   const bg = e.couleur || '#888';
-  const tc = e.texteCouleur || '#fff';
+  const tc = e.texteCouleur || e.couleur || '#333';
   const mtitre = document.getElementById('modal-courses-titre');
   const hexToRgbT = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
   const rgbT = hexToRgbT(bg);
@@ -1265,7 +1267,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
       </div>
       <span style="font-size:0.5rem;font-family:'Nunito',sans-serif;font-weight:800;color:#555">FIDÉLITÉ</span>
     </button>` : '';
-  mtitre.innerHTML = `<h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${bg};margin:0;flex:1">${e.nom}</h2>${barcodeBtn}`;
+  mtitre.innerHTML = `<h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0;flex:1">${e.nom}</h2>${barcodeBtn}`;
 
   if (arts.length === 0) {
     document.getElementById('modal-courses-liste').innerHTML = '<div class="modal-vide">Aucun article pour ce magasin 🎉</div>';
@@ -1606,7 +1608,7 @@ function majApercu() {
   const span = document.getElementById('apercu-nom');
   if (!span) return;
   span.textContent = nom;
-  span.style.color = editTexteCouleur || bg;
+  span.style.color = editTexteCouleur;
   span.style.textShadow = 'none';
   const nomLen = nom.length;
   const autoFs = nomLen > 12 ? 1.0 : nomLen > 8 ? 1.15 : 1.3;
