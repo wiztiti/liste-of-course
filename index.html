@@ -868,13 +868,6 @@
     </div>
 
     <div class="form-group">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.95rem;color:#555;font-weight:700">
-        <input type="checkbox" id="chk-afficher-nom" style="width:18px;height:18px;cursor:pointer;accent-color:#FF6B9D">
-        Afficher le nom sur la tuile
-      </label>
-    </div>
-
-    <div class="form-group">
       <label class="form-label">Carte de fidélité</label>
       <input class="form-input" type="text" id="edit-carte-fidelite" placeholder="Numéro de carte…" inputmode="text">
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -1170,14 +1163,16 @@ function creerCarteReglages() {
 }
 
 function creerEnseigneRowHTML(e) {
-  const tc = e.texteCouleur || '#fff';
   const bg = e.couleur || '#888';
+  const hexToRgb = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
+  const rgb = hexToRgb(bg);
+  const fs = e.nom.length > 12 ? 1.0 : e.nom.length > 8 ? 1.15 : 1.3;
   return `
-    <div class="enseigne-row" style="background:${bg};border-radius:12px;justify-content:center;position:relative;padding:10px 48px 10px 48px">
-      <span class="enseigne-nom" style="color:${tc};text-align:center;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase">${e.nom}</span>
-      <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;gap:4px">
-        <button class="btn-small btn-edit" onclick="editEnseigne('${e.id}');event.stopPropagation()" style="background:rgba(255,255,255,0.25);color:${tc};border:none">✏️</button>
-        <button class="btn-small btn-suppr-e" onclick="supprimerEnseigne('${e.id}');event.stopPropagation()" style="background:rgba(255,255,255,0.25);color:${tc};border:none">✕</button>
+    <div class="enseigne-row" style="background:linear-gradient(135deg,rgba(${rgb},0.18) 0%,rgba(${rgb},0.07) 50%,rgba(${rgb},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);display:flex;align-items:center;padding:0 16px;min-height:56px;margin-bottom:8px;position:relative">
+      <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${fs}rem;letter-spacing:2px;text-transform:uppercase;color:${bg};flex:1">${e.nom}</span>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn-small btn-edit" onclick="editEnseigne('${e.id}');event.stopPropagation()" style="background:#f0f0f0;color:#555;border:none;border-radius:8px;padding:4px 8px">✏️</button>
+        <button class="btn-small btn-suppr-e" onclick="supprimerEnseigne('${e.id}');event.stopPropagation()" style="background:#f0f0f0;color:#555;border:none;border-radius:8px;padding:4px 8px">✕</button>
       </div>
     </div>`;
 }
@@ -1227,13 +1222,16 @@ function supprimerArticle(id) {
 function ouvrirChoixEnseigne() {
   const grid = document.getElementById('enseigne-choix-grid');
   grid.innerHTML = enseignes.map(e => {
-    const tc = e.texteCouleur || '#fff';
     const bg = e.couleur || '#888';
+    const hexToRgb = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
+    const rgb = hexToRgb(bg);
     const nb = articles.filter(a => a.enseigneId === e.id).length;
+    const fs = e.nom.length > 12 ? 1.0 : e.nom.length > 8 ? 1.15 : 1.3;
     return `
-      <button class="enseigne-choix-btn" onclick="ouvrirCoursesEnseigne('${e.id}');fermerModal('modal-choix')" style="background:${bg};color:${tc}">
-        <span style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${tc}">${e.nom}</span>
-        <span style="font-size:0.75rem;color:${tc};opacity:0.8;font-weight:700">${nb} article${nb>1?'s':''}</span>
+      <button class="enseigne-choix-btn" onclick="ouvrirCoursesEnseigne('${e.id}');fermerModal('modal-choix')"
+        style="background:linear-gradient(135deg,rgba(${rgb},0.18) 0%,rgba(${rgb},0.07) 50%,rgba(${rgb},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;padding:0 16px;min-height:56px;width:100%;margin-bottom:8px">
+        <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${fs}rem;letter-spacing:2px;text-transform:uppercase;color:${bg}">${e.nom}</span>
+        <span style="background:#f0f0f0;color:#555;font-size:0.75rem;font-weight:800;padding:3px 10px;border-radius:20px">${nb}</span>
       </button>`;
   }).join('');
   ouvrirModal('modal-choix');
@@ -1248,7 +1246,9 @@ function ouvrirCoursesEnseigne(enseigneId) {
   const bg = e.couleur || '#888';
   const tc = e.texteCouleur || '#fff';
   const mtitre = document.getElementById('modal-courses-titre');
-  mtitre.style.background = bg;
+  const hexToRgbT = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
+  const rgbT = hexToRgbT(bg);
+  mtitre.style.cssText = `background:linear-gradient(135deg,rgba(${rgbT},0.18) 0%,rgba(${rgbT},0.07) 50%,rgba(${rgbT},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);cursor:pointer;margin-bottom:8px;display:flex;align-items:center;padding:0 16px;min-height:56px;position:relative`;
   mtitre.dataset.enseigneId = enseigneId;
   const barcodeBtn = e.carteFidelite ? `
     <button onclick="ouvrirFidelite();event.stopPropagation()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:white;border:none;border-radius:8px;padding:4px 8px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);display:flex;flex-direction:column;align-items:center;gap:2px;width:48px">
@@ -1265,7 +1265,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
       </div>
       <span style="font-size:0.5rem;font-family:'Nunito',sans-serif;font-weight:800;color:#555">FIDÉLITÉ</span>
     </button>` : '';
-  mtitre.innerHTML = `<h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0">${e.nom}</h2>${barcodeBtn}`;
+  mtitre.innerHTML = `<h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${bg};margin:0;flex:1">${e.nom}</h2>${barcodeBtn}`;
 
   if (arts.length === 0) {
     document.getElementById('modal-courses-liste').innerHTML = '<div class="modal-vide">Aucun article pour ce magasin 🎉</div>';
@@ -1427,11 +1427,12 @@ function editEnseigne(id) {
       r.checked = r.value === editCarteType;
     });
     // Remplir les suggestions
+    const hexToRgbS = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
     const sg = document.getElementById('enseignes-suggerees');
     if (sg) {
       sg.innerHTML = [...ENSEIGNES_CONNUES].sort((a,b) => a.nom.localeCompare(b.nom, 'fr')).map(e => `
         <button onclick="choisirEnseigne(this)" data-nom="${e.nom}" data-couleur="${e.couleur}" data-texte="${e.texteCouleur}"
-          class="btn-enseigne-suggeree" style="background:${e.couleur} !important;color:${e.texteCouleur} !important">
+          style="background:linear-gradient(135deg,rgba(${hexToRgbS(e.couleur)},0.18) 0%,rgba(${hexToRgbS(e.couleur)},0.07) 50%,rgba(${hexToRgbS(e.couleur)},0.18) 100%);border-left:4px solid ${e.couleur};border-right:4px solid ${e.couleur};border-top:none;border-bottom:none;border-radius:20px;padding:5px 12px;font-family:'Oswald',sans-serif;font-weight:700;font-size:0.8rem;letter-spacing:1px;text-transform:uppercase;color:${e.couleur};cursor:pointer;white-space:nowrap;background-color:white">
           ${e.nom}
         </button>`).join('');
     }
@@ -1600,13 +1601,17 @@ function majApercu() {
   const fs = editFontSize;
   const apercu = document.getElementById('apercu-tuile');
   if (!apercu) return;
-  apercu.style.background = editCouleurSelectionnee;
+  const bg = editCouleurSelectionnee;
+  const hexToRgbA = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
+  const rgbA = hexToRgbA(bg);
+  apercu.style.cssText = `background:linear-gradient(135deg,rgba(${rgbA},0.18) 0%,rgba(${rgbA},0.07) 50%,rgba(${rgbA},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);height:56px;display:flex;align-items:center;padding:0 16px;margin-bottom:16px;transition:all 0.2s`;
   const span = document.getElementById('apercu-nom');
   if (!span) return;
   span.textContent = nom;
-  span.style.color = editTexteCouleur;
+  span.style.color = bg;
+  span.style.textShadow = 'none';
   const nomLen = nom.length;
-  const autoFs = nomLen > 12 ? 1.1 : nomLen > 8 ? 1.3 : 1.6;
+  const autoFs = nomLen > 12 ? 1.0 : nomLen > 8 ? 1.15 : 1.3;
   span.style.fontSize = autoFs + 'rem';
   const lbl = document.getElementById('fontsize-label');
   if (lbl) lbl.textContent = fs.toFixed(1);
