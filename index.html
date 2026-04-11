@@ -1158,7 +1158,7 @@ function creerCarteMagasin(e, idx) {
     div.style.backgroundRepeat = 'no-repeat';
   }
   div.innerHTML = `
-    <div class="carte-header" style="position:relative;background:transparent;min-height:120px;flex-direction:column;justify-content:center" onclick="ouvrirCoursesEnseigne('${e.id}')">
+    <div class="carte-header" style="position:relative;background:transparent;min-height:60px;flex-direction:column;justify-content:center" onclick="ouvrirCoursesEnseigne('${e.id}')">
       ${nomHTML}
       ${nb > 0 ? `<div class="badge" style="background:rgba(0,0,0,0.3);color:#fff;font-size:0.75rem">${nb}</div>` : ''}
     </div>
