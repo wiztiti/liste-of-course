@@ -83,6 +83,13 @@
     transition: color 0.2s;
   }
   .tab.active { color: #2d2d44; }
+  .tab.active .tab-icon,
+  .tab.active .tab-label {
+    background: #e8f0fe;
+    border-radius: 20px;
+    padding: 2px 10px;
+  }
+  .tab.active .tab-icon { display: block; padding: 4px 12px; }
   .tab-icon { font-size: 1.4rem; }
   .tab-label { font-size: 0.7rem; font-weight: 800; font-family: 'Nunito', sans-serif; letter-spacing: 0.5px; }
 
@@ -1913,41 +1920,27 @@ const TABS_ORDER = ['courses', 'liste', 'enseignes'];
 let swipeHStartX = null;
 let swipeHStartY = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-  const appWrap = document.querySelector('.app-wrap');
-  if (!appWrap) return;
+document.addEventListener('touchstart', e => {
+  if (ongletActif === 'magasin') return;
+  // Ignorer si le touch commence dans la tabbar
+  if (e.target.closest('.tabbar')) return;
+  swipeHStartX = e.touches[0].clientX;
+  swipeHStartY = e.touches[0].clientY;
+}, { passive: true });
 
-  appWrap.addEventListener('touchstart', e => {
-    // Ne pas activer si on est dans un magasin ouvert
-    if (ongletActif === 'magasin') return;
-    swipeHStartX = e.touches[0].clientX;
-    swipeHStartY = e.touches[0].clientY;
-  }, { passive: true });
-
-  appWrap.addEventListener('touchend', e => {
-    if (swipeHStartX === null) return;
-    const dx = e.changedTouches[0].clientX - swipeHStartX;
-    const dy = e.changedTouches[0].clientY - swipeHStartY;
-    swipeHStartX = null;
-    swipeHStartY = null;
-
-    // Ignorer si geste principalement vertical
-    if (Math.abs(dy) > Math.abs(dx)) return;
-    // Seuil minimum
-    if (Math.abs(dx) < 60) return;
-
-    const idx = TABS_ORDER.indexOf(ongletActif);
-    if (idx === -1) return;
-
-    if (dx < 0 && idx < TABS_ORDER.length - 1) {
-      // Glisser gauche → onglet suivant
-      switchTab(TABS_ORDER[idx + 1]);
-    } else if (dx > 0 && idx > 0) {
-      // Glisser droite → onglet précédent
-      switchTab(TABS_ORDER[idx - 1]);
-    }
-  }, { passive: true });
-});
+document.addEventListener('touchend', e => {
+  if (swipeHStartX === null) return;
+  const dx = e.changedTouches[0].clientX - swipeHStartX;
+  const dy = e.changedTouches[0].clientY - swipeHStartY;
+  swipeHStartX = null;
+  swipeHStartY = null;
+  if (Math.abs(dy) > Math.abs(dx) * 0.8) return;
+  if (Math.abs(dx) < 50) return;
+  const idx = TABS_ORDER.indexOf(ongletActif);
+  if (idx === -1) return;
+  if (dx < 0 && idx < TABS_ORDER.length - 1) switchTab(TABS_ORDER[idx + 1]);
+  else if (dx > 0 && idx > 0) switchTab(TABS_ORDER[idx - 1]);
+}, { passive: true });
 
 // ===================== BOUTON RETOUR ANDROID =====================
 function pushModalState() {
