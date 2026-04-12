@@ -690,7 +690,10 @@
 
   <div class="page" id="page-liste" style="display:none">
     <div id="vue-liste" style="padding:20px 14px 12px"></div>
-    <button onclick="partagerListe()" style="position:fixed;bottom:76px;right:16px;width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:white;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(14,165,233,0.4);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1px" id="btn-partager"><span style="font-size:1.3rem">📤</span><span style="font-size:0.6rem;font-weight:800;font-family:'Nunito',sans-serif;letter-spacing:0.5px">PARTAGER</span></button>
+    <div id="btn-partager" style="position:fixed;bottom:76px;right:16px;display:none;flex-direction:column;gap:8px;z-index:500">
+      <button onclick="partagerSMS()" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:white;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(14,165,233,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px"><span style="font-size:1.2rem">💬</span><span style="font-size:0.55rem;font-weight:800;font-family:'Nunito',sans-serif">SMS</span></button>
+      <button onclick="partagerWhatsApp()" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);color:white;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(37,211,102,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px"><span style="font-size:1.2rem">💬</span><span style="font-size:0.55rem;font-weight:800;font-family:'Nunito',sans-serif">WHATSAPP</span></button>
+    </div>
   </div>
 
   <div class="page" id="page-enseignes" style="display:none">
@@ -1191,16 +1194,13 @@ function optionsEnseignes() {
   return enseignes.map(e => `<option value="${e.id}">${e.nom}</option>`).join('');
 }
 
-function partagerListe() {
-  if (articles.length === 0) { alert('Aucun article à partager !'); return; }
-
+function getTextePartage() {
   const groupes = {};
   articles.forEach(a => {
     if (!groupes[a.enseigneId]) groupes[a.enseigneId] = [];
     groupes[a.enseigneId].push(a);
   });
   const enseignesTriees = Object.keys(groupes).sort((a, b) => groupes[b].length - groupes[a].length);
-
   let texte = 'Voici la liste des courses, bon courage 😉\n\n';
   enseignesTriees.forEach(ensId => {
     const e = enseignes.find(x => x.id === ensId);
@@ -1208,8 +1208,17 @@ function partagerListe() {
     groupes[ensId].forEach(a => { texte += '- ' + a.nom + '\n'; });
     texte += '\n';
   });
+  return texte.trim();
+}
 
-  window.location.href = 'sms:?body=' + encodeURIComponent(texte.trim());
+function partagerSMS() {
+  if (articles.length === 0) { alert('Aucun article à partager !'); return; }
+  window.location.href = 'sms:?body=' + encodeURIComponent(getTextePartage());
+}
+
+function partagerWhatsApp() {
+  if (articles.length === 0) { alert('Aucun article à partager !'); return; }
+  window.open('https://wa.me/?text=' + encodeURIComponent(getTextePartage()), '_blank');
 }
 
 function hexToRgbInline(h) {
