@@ -1126,6 +1126,12 @@ let ongletActif = 'courses';
 let enseigneIdCourant = null;
 function switchTab(tab) {
   ongletActif = tab;
+  // Pousser un état si on quitte courses (sauf si on y revient)
+  if (tab !== 'courses') {
+    history.pushState({ ouvert: true }, '');
+  } else {
+    history.replaceState({ ouvert: false }, '');
+  }
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
     if (p) p.style.display = t === tab ? (t === 'courses' ? 'flex' : 'block') : 'none';
@@ -1411,7 +1417,6 @@ function ouvrirCoursesEnseigne(enseigneId) {
     </div>`;
 
   switchTab('magasin');
-  history.pushState({ ouvert: true }, '');
 
   if (arts.length === 0) {
     const zoneSaisie = `
