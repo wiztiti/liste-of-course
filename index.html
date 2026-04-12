@@ -392,10 +392,6 @@
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .modal-overlay.visible .modal { transform: translateY(0); }
-  #modal-courses { z-index: 900; }
-  #modal-courses .modal { height: calc(100dvh - 60px); min-height: calc(100dvh - 60px); display: flex; flex-direction: column; border-radius: 16px 16px 0 0; }
-  #modal-courses #modal-courses-liste { flex: 1; overflow-y: auto; }
-  #modal-courses #btn-effacer-coches { flex-shrink: 0; }
 
   .modal-handle {
     width: 40px;
@@ -717,6 +713,10 @@
     <div id="vue-enseignes" style="padding:12px 14px"></div>
   </div>
 
+  <div class="page" id="page-magasin" style="display:none">
+    <div id="vue-magasin" style="padding:12px 14px"></div>
+  </div>
+
   <!-- TAB BAR -->
   <nav class="tabbar">
     <button class="tab active" id="tab-courses" onclick="switchTab('courses')">
@@ -747,21 +747,7 @@
   </div>
 </div>
 
-<!-- MODAL LISTE EN COURS -->
-<div class="modal-overlay" id="modal-courses">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div id="modal-courses-titre" onclick="fermerModal('modal-courses')" style="cursor:pointer;margin-bottom:8px;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:12px 16px;position:relative"></div>
-
-    <div id="modal-courses-liste"></div>
-
-    <div id="btn-effacer-coches" style="margin-top:12px;text-align:center">
-      <button onclick="effacerCoches()" style="background:none;border:none;color:#e74c3c;font-size:0.8rem;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;opacity:0.7;padding:4px 8px">
-        🗑️ Supprimer tous les produits achetés
-      </button>
-    </div>
-  </div>
-</div>
+<!-- page-magasin remplace modal-courses -->
 
 
 <!-- MODAL EDIT ARTICLE -->
@@ -1113,17 +1099,20 @@ function renderEnseignes() {
 }
 
 let ongletActif = 'courses';
+let enseigneIdCourant = null;
 function switchTab(tab) {
   ongletActif = tab;
   if (tab !== 'courses') history.pushState({ app: true }, '');
-  ['courses','liste','enseignes'].forEach(t => {
-    document.getElementById('page-' + t).style.display = t === tab ? 'block' : 'none';
-    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  document.getElementById('topbar-titre').textContent = {courses:'🛒 Courses',liste:'📋 Ma liste',enseignes:'🏪 Enseignes',magasin:''}[tab] || '';
+  ['courses','liste','enseignes','magasin'].forEach(t => {
+    const p = document.getElementById('page-' + t);
+    if (p) p.style.display = t === tab ? 'block' : 'none';
+    const tb = document.getElementById('tab-' + t);
+    if (tb) tb.classList.toggle('active', t === tab);
   });
-  const titres = { courses: '🛒 Courses', liste: '📋 Ma liste', enseignes: '🏪 Enseignes' };
-  document.getElementById('topbar-titre').textContent = titres[tab];
   if (tab === 'liste') renderListe();
   if (tab === 'enseignes') renderEnseignes();
+  // magasin : déjà rendu par ouvrirCoursesEnseigne
 }
 
 function logoHTML(e, size = 56, radius = 14) {
@@ -1310,15 +1299,13 @@ function ouvrirCoursesEnseigne(enseigneId) {
   const e = enseignes.find(x => x.id === enseigneId);
   if (!e) return;
   const arts = articles.filter(a => a.enseigneId === enseigneId);
+  enseigneIdCourant = enseigneId;
 
-  // titre
   const bg = e.couleur || '#888';
   const tc = e.texteCouleur || e.couleur || '#333';
-  const mtitre = document.getElementById('modal-courses-titre');
   const hexToRgbT = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
   const rgbT = hexToRgbT(bg);
-  mtitre.style.cssText = `background:linear-gradient(135deg,rgba(${rgbT},0.18) 0%,rgba(${rgbT},0.07) 50%,rgba(${rgbT},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);cursor:pointer;margin-bottom:8px;display:flex;align-items:center;padding:0 16px;min-height:56px;position:relative`;
-  mtitre.dataset.enseigneId = enseigneId;
+  const titreTuileStyle = `background:linear-gradient(135deg,rgba(${rgbT},0.18) 0%,rgba(${rgbT},0.07) 50%,rgba(${rgbT},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);cursor:pointer;margin-bottom:8px;display:flex;align-items:center;padding:0 16px;min-height:56px;position:relative`;
   const barcodeBtn = e.carteFidelite ? `
     <button onclick="ouvrirFidelite();event.stopPropagation()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:white;border:none;border-radius:8px;padding:4px 8px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);display:flex;flex-direction:column;align-items:center;gap:2px;width:48px">
       <div style="display:flex;gap:1px;align-items:flex-end;height:16px">
@@ -1334,7 +1321,21 @@ function ouvrirCoursesEnseigne(enseigneId) {
       </div>
       <span style="font-size:0.5rem;font-family:'Nunito',sans-serif;font-weight:800;color:#555">FIDÉLITÉ</span>
     </button>` : '';
-  mtitre.innerHTML = `<h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0;flex:1">${e.nom}</h2>${barcodeBtn}`;
+
+  // Injecter le squelette de la page AVANT d'accéder aux éléments
+  document.getElementById('vue-magasin').innerHTML = `
+    <div id="modal-courses-titre" data-enseigne-id="${enseigneId}" style="${titreTuileStyle}">
+      <h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0;flex:1">${e.nom}</h2>
+      ${barcodeBtn}
+    </div>
+    <div id="modal-courses-liste"></div>
+    <div id="btn-effacer-coches" style="margin-top:12px;text-align:center">
+      <button onclick="effacerCoches()" style="background:none;border:none;color:#e74c3c;font-size:0.8rem;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;opacity:0.7;padding:4px 8px">
+        🗑️ Supprimer tous les produits achetés
+      </button>
+    </div>`;
+
+  switchTab('magasin');
 
   if (arts.length === 0) {
     const zoneSaisie = `
@@ -1357,6 +1358,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
           <button onclick="ajouterDepuisModal()" style="background:#2d2d44;color:white;border:none;border-radius:12px;padding:0 16px;font-size:1.2rem;cursor:pointer;font-weight:900">+</button>
         </div>
       </div>`;
+    const zoneSaisie2 = zoneSaisie;
     document.getElementById('modal-courses-liste').innerHTML = artsTries.map(a => {
       const isBarre = barre[a.id];
       return `
@@ -1371,13 +1373,12 @@ function ouvrirCoursesEnseigne(enseigneId) {
             onclick="event.stopPropagation()"
             style="touch-action:none">☰</span>
         </div>`;
-    }).join('') + zoneSaisie;
+    }).join('') + zoneSaisie2;
     initArticleDrag();
   }
 
   // btn-effacer toujours visible
   cacherInputAjout();
-  ouvrirModal('modal-courses');
 }
 
 
@@ -1399,7 +1400,7 @@ function modifierArticleDepuisModal(id) {
   const artId = id || artOptionsId;
   if (!artId) return;
   fermerModal('modal-art-options');
-  fermerModal('modal-courses');
+  switchTab('courses');
   editerArticle(artId);
 }
 
@@ -1548,9 +1549,10 @@ function afficherInputAjout() {
 }
 
 function cacherInputAjout() {
-  document.getElementById('btn-plus-ajout').style.display = 'inline-block';
+  const btn = document.getElementById('btn-plus-ajout');
+  if (btn) { btn.style.display = 'inline-block'; btn.textContent = '+'; btn.style.color = '#aaa'; btn.style.fontSize = '1.6rem'; }
   const wrap = document.getElementById('input-ajout-wrap');
-  wrap.style.display = 'none';
+  if (wrap) wrap.style.display = 'none';
   const inp = document.getElementById('modal-cours-input');
   if (inp) inp.value = '';
 }
@@ -1778,10 +1780,10 @@ function artDragMove(e) {
   e.preventDefault();
   const y = e.clientY;
 
-  // Annuler si on sort du modal
-  const modal = document.querySelector('#modal-courses .modal');
-  if (modal) {
-    const mr = modal.getBoundingClientRect();
+  // Annuler si on sort de la page magasin
+  const pageMag = document.getElementById('page-magasin');
+  if (pageMag) {
+    const mr = pageMag.getBoundingClientRect();
     if (e.clientX < mr.left || e.clientX > mr.right || y < mr.top || y > mr.bottom) {
       artDragEnd(e);
       return;
@@ -1867,44 +1869,8 @@ function artDragEnd(e) {
 }
 
 
-// ===================== SWIPE DOWN POUR FERMER MODAL COURSES =====================
-let swipeStartY = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-  const modalCourses = document.getElementById('modal-courses');
-  const modalInner = modalCourses.querySelector('.modal');
 
-  // Swipe to close : uniquement si touch démarre sur le titre ou le handle
-  modalInner.addEventListener('touchstart', e => {
-    const titre = document.getElementById('modal-courses-titre');
-    const handle = modalInner.querySelector('.modal-handle');
-    const touchedZone = titre && titre.contains(e.target) || handle && handle.contains(e.target);
-    swipeStartY = touchedZone ? e.touches[0].clientY : null;
-  }, { passive: true });
-
-  modalInner.addEventListener('touchmove', e => {
-    if (swipeStartY === null) return;
-    const dy = e.touches[0].clientY - swipeStartY;
-    if (dy > 0) {
-      e.preventDefault();
-      modalInner.style.transform = `translateY(${dy}px)`;
-      modalInner.style.transition = 'none';
-    }
-  }, { passive: false });
-
-  modalInner.addEventListener('touchend', e => {
-    if (swipeStartY === null) return;
-    const dy = e.changedTouches[0].clientY - swipeStartY;
-    modalInner.style.transition = 'transform 0.3s ease';
-    if (dy > 60) {
-      modalInner.style.transform = 'translateY(100%)';
-      setTimeout(() => fermerModal('modal-courses'), 250);
-    } else {
-      modalInner.style.transform = '';
-    }
-    swipeStartY = null;
-  });
-});
 
 
 // ===================== BOUTON RETOUR ANDROID =====================
@@ -1928,6 +1894,8 @@ function gererRetour() {
     if (el && el.classList.contains('visible')) { fermerModal(id); return true; }
   }
 
+  // Page magasin → courses
+  if (ongletActif === 'magasin') { switchTab('courses'); return true; }
   // Onglet secondaire → courses
   if (ongletActif !== 'courses') { switchTab('courses'); return true; }
 
@@ -2244,11 +2212,8 @@ function ouvrirModal(id) {
   history.pushState({ app: true }, '');
 }
 function fermerModal(id) {
-  document.getElementById(id).classList.remove('visible');
-  if (id === 'modal-courses') {
-    const inner = document.querySelector('#modal-courses .modal');
-    if (inner) { inner.style.transform = ''; inner.style.transition = ''; }
-  }
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('visible');
 }
 // Fermer en cliquant l'overlay
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -2480,7 +2445,7 @@ function afficherApercuGenerique(apercu, msg) {
 function supprimerLogoApercu() {
   editLogoBase64 = null;
   editLogoOpt = 'lettre';
-  document.getElementById('logo-apercu').style.display = 'none';
+  const la = document.getElementById('logo-apercu'); if (la) la.style.display = 'none';
 }
 
 
