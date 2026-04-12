@@ -1078,13 +1078,14 @@ function renderListe() {
   if (!vue) return;
   vue.innerHTML = `
     <div id="liste-articles">${renderArticles()}</div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
-      <input type="text" id="input-article" placeholder="Ajouter un article…"
-        onkeydown="if(event.key==='Enter')ajouterArticle()"
-        style="width:100%;border:2px solid #eee;border-radius:12px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:0.92rem;outline:none;">
-      <div style="display:flex;gap:8px">
-        <select id="select-enseigne" style="flex:1;border:2px solid #eee;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:0.85rem;outline:none;background:white;color:#444">${optionsEnseignes()}</select>
-        <button class="btn" onclick="ajouterArticle()" style="padding:10px 22px;font-size:1rem">Ajouter</button>
+    <div id="zone-ajout-liste" style="margin-top:4px">
+      <button id="btn-plus-liste" onclick="afficherInputListe()" style="background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer;padding:4px 12px;font-weight:300;line-height:1">+</button>
+      <div id="input-liste-wrap" style="display:none;flex-direction:column;gap:8px;margin-top:4px">
+        <input type="text" id="input-article" placeholder="Ajouter un article…"
+          onkeydown="if(event.key==='Enter')ajouterArticle()"
+          style="width:100%;border:2px solid #eee;border-radius:12px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:0.92rem;outline:none;">
+        <select id="select-enseigne" style="width:100%;border:2px solid #eee;border-radius:12px;padding:10px;font-family:'Nunito',sans-serif;font-size:0.85rem;outline:none;background:white;color:#444">${optionsEnseignes()}</select>
+        <button class="btn" onclick="ajouterArticle()" style="width:100%;padding:10px;font-size:1rem">Ajouter</button>
       </div>
     </div>`;
 }
@@ -1102,7 +1103,8 @@ let ongletActif = 'courses';
 let enseigneIdCourant = null;
 function switchTab(tab) {
   ongletActif = tab;
-  if (tab !== 'courses') history.pushState({ app: true }, '');
+  if (tab !== 'courses') history.pushState({ niveau: 1 }, '');
+  else history.replaceState({ niveau: 0 }, '');
   document.getElementById('topbar-titre').textContent = {courses:'🛒 Courses',liste:'📋 Ma liste',enseignes:'🏪 Enseignes',magasin:''}[tab] || '';
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
@@ -1159,19 +1161,28 @@ function optionsEnseignes() {
   return enseignes.map(e => `<option value="${e.id}">${e.nom}</option>`).join('');
 }
 
+function hexToRgbInline(h) {
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);
+  return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128';
+}
+
 function renderArticles() {
   if (articles.length === 0) return '<div class="vide">Aucun article pour l\'instant 😊</div>';
   return articles.map(a => {
     const e = enseignes.find(x => x.id === a.enseigneId);
-    const bg = e ? e.couleur : '#eee';
+    const bg = e ? (e.couleur || '#888') : '#888';
+    const tc = e ? (e.texteCouleur || e.couleur || '#333') : '#333';
     return `
-      <div class="article-item" onclick="editerArticle('${a.id}')" style="cursor:pointer">
-        <span class="art-nom">${a.nom}</span>
-        <span class="art-enseigne">${e ? e.nom : '?'}</span>
-        <button class="btn-suppr" onclick="supprimerArticle('${a.id}')">✕</button>
+      <div style="display:flex;align-items:center;gap:8px;padding:3px 4px">
+        <span onclick="supprimerArticle('${a.id}')" style="color:#e74c3c;font-size:1.1rem;flex-shrink:0;padding:0 6px 0 0;cursor:pointer;line-height:1">✕</span>
+        <span style="flex:1;font-weight:700;font-size:0.88rem;color:#333">${a.nom}</span>
+        <span style="font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:20px;background:linear-gradient(135deg,rgba(${hexToRgbInline(bg)},0.18) 0%,rgba(${hexToRgbInline(bg)},0.07) 100%);border-left:3px solid ${bg};color:${tc};white-space:nowrap">${e ? e.nom : '?'}</span>
+        <span onclick="editerArticle('${a.id}')" style="color:#aaa;font-size:0.8rem;flex-shrink:0;padding:0 4px;cursor:pointer">✏️</span>
       </div>`;
   }).join('');
 }
+
+
 
 
 function creerCarteMagasin(e, idx) {
@@ -1241,7 +1252,7 @@ function toggleCarte(type) {
     carteOuverte = null;
   } else {
     carteOuverte = type;
-    history.pushState({ app: true }, '');
+    history.pushState({ niveau: 1 }, '');
   }
   render();
   if (carteOuverte) {
@@ -1262,7 +1273,6 @@ function ajouterArticle() {
   if (!nom) return;
   articles.push({ id: 'a' + Date.now(), nom, enseigneId: sel.value });
   input.value = '';
-  input.focus();
   sauvegarder();
   renderCourses();
   renderListe();
@@ -1325,6 +1335,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
   // Injecter le squelette de la page AVANT d'accéder aux éléments
   document.getElementById('vue-magasin').innerHTML = `
     <div id="modal-courses-titre" data-enseigne-id="${enseigneId}" style="${titreTuileStyle}">
+      <span onclick="switchTab('courses')" style="font-size:1.3rem;cursor:pointer;padding-right:10px;flex-shrink:0;color:${tc}">‹</span>
       <h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0;flex:1">${e.nom}</h2>
       ${barcodeBtn}
     </div>
@@ -1523,6 +1534,29 @@ function effacerCoches() {
   sauvegarder();
   ouvrirCoursesEnseigne(ensId);
   render();
+}
+
+function afficherInputListe() {
+  const wrap = document.getElementById('input-liste-wrap');
+  const btn = document.getElementById('btn-plus-liste');
+  if (!wrap || !btn) return;
+  if (wrap.style.display === 'flex') {
+    wrap.style.display = 'none';
+    btn.textContent = '+';
+    btn.style.color = '#aaa';
+    btn.style.fontSize = '1.6rem';
+    const inp = document.getElementById('input-article');
+    if (inp) inp.value = '';
+  } else {
+    wrap.style.display = 'flex';
+    btn.textContent = '×';
+    btn.style.color = '#e74c3c';
+    btn.style.fontSize = '1.8rem';
+    setTimeout(() => {
+      const inp = document.getElementById('input-article');
+      if (inp) inp.focus();
+    }, 100);
+  }
 }
 
 function afficherInputAjout() {
@@ -1873,42 +1907,92 @@ function artDragEnd(e) {
 
 
 
+
+// ===================== SWIPE HORIZONTAL ENTRE ONGLETS =====================
+const TABS_ORDER = ['courses', 'liste', 'enseignes'];
+let swipeHStartX = null;
+let swipeHStartY = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const appWrap = document.querySelector('.app-wrap');
+  if (!appWrap) return;
+
+  appWrap.addEventListener('touchstart', e => {
+    // Ne pas activer si on est dans un magasin ouvert
+    if (ongletActif === 'magasin') return;
+    swipeHStartX = e.touches[0].clientX;
+    swipeHStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  appWrap.addEventListener('touchend', e => {
+    if (swipeHStartX === null) return;
+    const dx = e.changedTouches[0].clientX - swipeHStartX;
+    const dy = e.changedTouches[0].clientY - swipeHStartY;
+    swipeHStartX = null;
+    swipeHStartY = null;
+
+    // Ignorer si geste principalement vertical
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    // Seuil minimum
+    if (Math.abs(dx) < 60) return;
+
+    const idx = TABS_ORDER.indexOf(ongletActif);
+    if (idx === -1) return;
+
+    if (dx < 0 && idx < TABS_ORDER.length - 1) {
+      // Glisser gauche → onglet suivant
+      switchTab(TABS_ORDER[idx + 1]);
+    } else if (dx > 0 && idx > 0) {
+      // Glisser droite → onglet précédent
+      switchTab(TABS_ORDER[idx - 1]);
+    }
+  }, { passive: true });
+});
+
 // ===================== BOUTON RETOUR ANDROID =====================
 function pushModalState() {
   history.pushState({ modal: true }, '');
 }
 
-// Système retour simplifié : on empile un état à chaque ouverture
-history.replaceState({ app: true }, '');
+// Système retour : état de base = niveau 0, tout le reste = niveau 1
+history.replaceState({ niveau: 0 }, '');
 
-function gererRetour() {
-  // Modal fidélité
+function niveauActuel() {
   const mf = document.getElementById('modal-fidelite');
-  if (mf && mf.style.display === 'flex') { fermerFidelite(); return true; }
-
-  // Modals ouverts
-  const modals = ['modal-courses', 'modal-edit-enseigne', 'modal-edit-article',
+  if (mf && mf.style.display === 'flex') return 2;
+  const modals = ['modal-edit-enseigne', 'modal-edit-article',
                   'modal-confirm-suppr', 'modal-art-options', 'modal-choix'];
   for (const id of modals) {
     const el = document.getElementById(id);
-    if (el && el.classList.contains('visible')) { fermerModal(id); return true; }
+    if (el && el.classList.contains('visible')) return 2;
   }
-
-  // Page magasin → courses
-  if (ongletActif === 'magasin') { switchTab('courses'); return true; }
-  // Onglet secondaire → courses
-  if (ongletActif !== 'courses') { switchTab('courses'); return true; }
-
-  return false; // rien à fermer → quitter
+  if (ongletActif !== 'courses') return 1;
+  return 0;
 }
 
 window.addEventListener('popstate', e => {
-  const handled = gererRetour();
-  if (handled) {
-    // Remettre l'état pour le prochain retour
-    history.pushState({ app: true }, '');
+  const mf = document.getElementById('modal-fidelite');
+  if (mf && mf.style.display === 'flex') {
+    fermerFidelite();
+    history.pushState({ niveau: 1 }, '');
+    return;
   }
-  // Sinon on laisse le navigateur quitter
+  const modals = ['modal-edit-enseigne', 'modal-edit-article',
+                  'modal-confirm-suppr', 'modal-art-options', 'modal-choix'];
+  for (const id of modals) {
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('visible')) {
+      fermerModal(id);
+      if (niveauActuel() > 0) history.pushState({ niveau: 1 }, '');
+      return;
+    }
+  }
+  if (ongletActif !== 'courses') {
+    switchTab('courses');
+    // Ne pas repusher — on est revenu à niveau 0
+    return;
+  }
+  // niveau 0 + courses → quitter (laisser le navigateur agir)
 });
 
 
@@ -1928,7 +2012,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  history.pushState({ app: true }, '');
+  history.pushState({ niveau: 2 }, '');
 
   // Luminosité max
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
@@ -2209,7 +2293,7 @@ function encodeCode128(str) {
 // ===================== MODAUX =====================
 function ouvrirModal(id) {
   document.getElementById(id).classList.add('visible');
-  history.pushState({ app: true }, '');
+  history.pushState({ niveau: 2 }, '');
 }
 function fermerModal(id) {
   const el = document.getElementById(id);
