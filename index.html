@@ -988,6 +988,25 @@ const DEFAUT_ARTICLES = [
   { id: 'a3', nom: 'Tomates cerises', enseigneId: 'e3' },
 ];
 
+// Préférences d'apparence
+const DEFAUT_APPARENCE = { couleur: '#ffffff', motif: 'vagues' };
+let apparence = charger('mc_apparence', DEFAUT_APPARENCE);
+
+function appliquerApparence() {
+  const motifs = {
+    'aucun': '',
+    'points': 'radial-gradient(#d0d0d0 1px, transparent 1px)',
+    'grille': 'linear-gradient(#e0e0e0 1px,transparent 1px),linear-gradient(90deg,#e0e0e0 1px,transparent 1px)',
+    'diagonales': 'repeating-linear-gradient(45deg,#e0e0e0 0,#e0e0e0 1px,transparent 0,transparent 50%)',
+    'vagues': 'repeating-radial-gradient(circle at 0 0,transparent 0,#ffffff 12px),repeating-linear-gradient(#e0e0e055,#e0e0e0)',
+    'losanges': 'linear-gradient(135deg,#e0e0e0 25%,transparent 25%),linear-gradient(225deg,#e0e0e0 25%,transparent 25%),linear-gradient(315deg,#e0e0e0 25%,transparent 25%),linear-gradient(45deg,#e0e0e0 25%,transparent 25%)',
+  };
+  const sizes = { 'points':'20px 20px','grille':'24px 24px','diagonales':'16px 16px','losanges':'16px 16px' };
+  document.body.style.backgroundColor = apparence.couleur;
+  document.body.style.backgroundImage = motifs[apparence.motif] || '';
+  document.body.style.backgroundSize = sizes[apparence.motif] || '';
+}
+
 function charger(cle, defaut) {
   try {
     const val = localStorage.getItem(cle);
@@ -1021,6 +1040,7 @@ let ordreMagasins = charger('mc_ordre', enseignes.map(e => e.id));
 let barre = charger('mc_barre', {});
 // Sauvegarder la migration propre immédiatement
 try { localStorage.setItem('mc_enseignes', JSON.stringify(enseignes)); } catch(e) {}
+appliquerApparence();
 
 // Edit enseigne
 let editEnseigneId = null;
@@ -1084,6 +1104,28 @@ function renderEnseignes() {
   const magasinsOuverts = vue.dataset.magasinsOuverts === 'true';
   const aideOuverte = vue.dataset.aideOuverte === 'true';
   vue.innerHTML = `
+    <!-- Section Apparence -->
+    <div onclick="toggleSection(this,'apparence')" style="text-align:center;padding:14px 16px;background:linear-gradient(135deg,#fce7f3,#fbcfe8);border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.08);cursor:pointer;margin-bottom:8px;border:1px solid #fbcfe8">
+      <span style="font-weight:800;font-size:1rem;color:#9d174d;letter-spacing:1px">🎨 Apparence</span>
+    </div>
+    <div id="section-apparence" style="display:none;padding:0 4px;margin-bottom:16px">
+      <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07)">
+        <label style="font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px">Couleur de fond</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+          ${['#ffffff','#f8fafc','#fef9ef','#f0fdf4','#eff6ff','#fdf4ff','#fff1f2','#f5f5f4'].map(c =>
+            `<div onclick="changerCouleurFond('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${apparence.couleur===c?'#333':'#ddd'};cursor:pointer"></div>`
+          ).join('')}
+          <input type="color" value="${apparence.couleur}" oninput="changerCouleurFond(this.value)" style="width:32px;height:32px;border-radius:50%;border:2px solid #ddd;cursor:pointer;padding:0">
+        </div>
+        <label style="font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px">Motif</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          ${[['aucun','Aucun',''],['points','Points','radial-gradient(#ccc 1px,transparent 1px)'],['grille','Grille','linear-gradient(#ddd 1px,transparent 1px),linear-gradient(90deg,#ddd 1px,transparent 1px)'],['diagonales','Diagonales','repeating-linear-gradient(45deg,#ddd 0,#ddd 1px,transparent 0,transparent 50%)'],['vagues','Vagues','repeating-radial-gradient(circle at 0 0,transparent 0,white 10px),repeating-linear-gradient(#ddd,#ddd)'],['losanges','Losanges','linear-gradient(135deg,#ddd 25%,transparent 25%),linear-gradient(225deg,#ddd 25%,transparent 25%),linear-gradient(315deg,#ddd 25%,transparent 25%),linear-gradient(45deg,#ddd 25%,transparent 25%)']].map(([id,nom,bg]) =>
+            `<div onclick="changerMotif('${id}')" style="height:50px;border-radius:10px;background-color:#f5f5f5;background-image:${bg};background-size:16px 16px;border:2px solid ${apparence.motif===id?'#333':'#eee'};cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><span style="font-size:0.65rem;font-weight:800;color:#555;background:rgba(255,255,255,0.8);padding:1px 4px;border-radius:4px">${nom}</span></div>`
+          ).join('')}
+        </div>
+      </div>
+    </div>
+
     <!-- Section Gestion des magasins -->
     <div onclick="toggleSection(this,'magasins')" style="text-align:center;padding:14px 16px;background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.08);cursor:pointer;margin-bottom:8px;border:1px solid #bae6fd">
       <span style="font-weight:800;font-size:1rem;color:#0369a1;letter-spacing:1px">🏪 Gestion des magasins</span>
@@ -1115,6 +1157,20 @@ function renderEnseignes() {
       <p><strong>Carte de fidélité</strong> — Dans Gestion des magasins → modifier → saisir le numéro de carte.</p>
       <p style="margin-top:16px;text-align:center;color:#bbb;font-size:0.78rem">© 04-2026 — Tous droits réservés — F. Lepreux</p>
     </div>`;
+}
+
+function changerCouleurFond(couleur) {
+  apparence.couleur = couleur;
+  try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
+  appliquerApparence();
+  renderEnseignes();
+}
+
+function changerMotif(motif) {
+  apparence.motif = motif;
+  try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
+  appliquerApparence();
+  renderEnseignes();
 }
 
 function toggleSection(header, section) {
