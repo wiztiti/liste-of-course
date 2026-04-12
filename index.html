@@ -989,8 +989,13 @@ const DEFAUT_ARTICLES = [
 ];
 
 // Préférences d'apparence
-const DEFAUT_APPARENCE = { couleur: '#ffffff', motif: 'vagues' };
-let apparence = charger('mc_apparence', DEFAUT_APPARENCE);
+const DEFAUT_APPARENCE = { couleur: '#f0fdf4', motif: 'grille' };
+const APPARENCE_VERSION = 'v2';
+let apparence = localStorage.getItem('mc_apparence_v') === APPARENCE_VERSION
+  ? charger('mc_apparence', DEFAUT_APPARENCE)
+  : DEFAUT_APPARENCE;
+localStorage.setItem('mc_apparence_v', APPARENCE_VERSION);
+try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
 
 function appliquerApparence() {
   const motifs = {
