@@ -1128,7 +1128,7 @@ function switchTab(tab) {
   ongletActif = tab;
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
-    if (p) p.style.display = t === tab ? 'block' : 'none';
+    if (p) p.style.display = t === tab ? (t === 'courses' ? 'flex' : 'block') : 'none';
     const tb = document.getElementById('tab-' + t);
     // Page magasin = sous-page de courses, garder courses actif
     const tabActif = tab === 'magasin' ? 'courses' : tab;
@@ -1188,7 +1188,6 @@ function optionsEnseignes() {
 function partagerListe() {
   if (articles.length === 0) { alert('Aucun article à partager !'); return; }
 
-  // Grouper par enseigne, triées par nb d'articles
   const groupes = {};
   articles.forEach(a => {
     if (!groupes[a.enseigneId]) groupes[a.enseigneId] = [];
@@ -1200,18 +1199,11 @@ function partagerListe() {
   enseignesTriees.forEach(ensId => {
     const e = enseignes.find(x => x.id === ensId);
     texte += (e ? e.nom.toUpperCase() : '?') + '\n';
-    groupes[ensId].forEach(a => {
-      texte += '- ' + a.nom + '\n';
-    });
+    groupes[ensId].forEach(a => { texte += '- ' + a.nom + '\n'; });
     texte += '\n';
   });
 
-  if (navigator.share) {
-    navigator.share({ text: texte.trim() });
-  } else {
-    // Fallback : copier dans le presse-papiers
-    navigator.clipboard.writeText(texte.trim()).then(() => alert('Liste copiée !'));
-  }
+  window.location.href = 'sms:?body=' + encodeURIComponent(texte.trim());
 }
 
 function hexToRgbInline(h) {
