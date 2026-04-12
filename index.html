@@ -1201,7 +1201,7 @@ function partagerListe() {
   });
   const enseignesTriees = Object.keys(groupes).sort((a, b) => groupes[b].length - groupes[a].length);
 
-  let texte = 'Liste de courses\n\n';
+  let texte = 'Voici la liste des courses, bon courage 😉\n\n';
   enseignesTriees.forEach(ensId => {
     const e = enseignes.find(x => x.id === ensId);
     texte += (e ? e.nom.toUpperCase() : '?') + '\n';
