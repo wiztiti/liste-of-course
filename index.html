@@ -1341,11 +1341,17 @@ function ouvrirCoursesEnseigne(enseigneId) {
       <span style="font-size:0.5rem;font-family:'Nunito',sans-serif;font-weight:800;color:#555">FIDÉLITÉ</span>
     </button>` : '';
 
+  const nbAchetes = arts.filter(a => barre[a.id]).length;
+  const carteBadge = nbAchetes > 0
+    ? `<span style="font-size:1rem;flex-shrink:0;margin-left:8px">🛒<span style="font-size:0.75rem;font-weight:900;vertical-align:super;color:${tc}">${nbAchetes}</span></span>`
+    : '';
+
   // Injecter le squelette de la page AVANT d'accéder aux éléments
   document.getElementById('vue-magasin').innerHTML = `
     <div id="modal-courses-titre" data-enseigne-id="${enseigneId}" style="${titreTuileStyle}">
       <span onclick="switchTab('courses')" style="font-size:1.3rem;cursor:pointer;padding-right:10px;flex-shrink:0;color:${tc}">‹</span>
       <h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0;flex:1">${e.nom}</h2>
+      ${carteBadge}
       ${barcodeBtn}
     </div>
     <div id="modal-courses-liste"></div>
