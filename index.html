@@ -2015,6 +2015,7 @@ function etatEstOuvert() {
     const el = document.getElementById(id);
     if (el && el.classList.contains('visible')) return id;
   }
+  if (ongletActif === 'magasin') return 'magasin';
   if (ongletActif !== 'courses') return 'onglet';
   return null;
 }
@@ -2033,6 +2034,7 @@ window.addEventListener('popstate', e => {
 
   // Fermer
   if (ouvert === 'fidelite') fermerFidelite();
+  else if (ouvert === 'magasin') switchTab('courses');
   else if (ouvert === 'onglet') switchTab('courses');
   else fermerModal(ouvert);
 
