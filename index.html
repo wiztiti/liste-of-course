@@ -2065,8 +2065,9 @@ document.addEventListener('touchend', e => {
   const dy = e.changedTouches[0].clientY - swipeHStartY;
   swipeHStartX = null;
   swipeHStartY = null;
-  if (Math.abs(dy) > Math.abs(dx) * 0.8) return;
-  if (Math.abs(dx) < 50) return;
+  // Geste doit être clairement horizontal : dx > dy * 2 et dx > 80px
+  if (Math.abs(dy) > Math.abs(dx) * 0.4) return;
+  if (Math.abs(dx) < 80) return;
   const idx = TABS_ORDER.indexOf(ongletActif);
   if (idx === -1) return;
   if (dx < 0 && idx < TABS_ORDER.length - 1) switchTab(TABS_ORDER[idx + 1]);
