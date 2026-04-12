@@ -392,7 +392,7 @@
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .modal-overlay.visible .modal { transform: translateY(0); }
-  #modal-courses .modal { height: 100dvh; min-height: 100dvh; display: flex; flex-direction: column; border-radius: 0; }
+  #modal-courses .modal { height: calc(100dvh - 60px); min-height: calc(100dvh - 60px); display: flex; flex-direction: column; border-radius: 0; margin-bottom: 60px; }
   #modal-courses #modal-courses-liste { flex: 1; overflow-y: auto; }
   #modal-courses #btn-effacer-coches { flex-shrink: 0; }
 
@@ -751,9 +751,7 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <div id="modal-courses-titre" onclick="fermerModal('modal-courses')" style="cursor:pointer;margin-bottom:8px;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:12px 16px;position:relative"></div>
-    <div style="font-size:0.75rem;color:#aaa;text-align:center;padding:0 0 8px;line-height:1.6">
-      👆 Court : cocher &nbsp;|&nbsp; 👇 Long : modifier ou supprimer
-    </div>
+
     <div id="modal-courses-liste"></div>
 
     <div id="btn-effacer-coches" style="margin-top:12px;text-align:center">
