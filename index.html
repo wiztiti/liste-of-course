@@ -1154,8 +1154,12 @@ let ongletActif = 'courses';
 let enseigneIdCourant = null;
 function switchTab(tab) {
   ongletActif = tab;
-  if (tab !== 'courses') history.pushState({ nav: true }, '');
-  else history.replaceState({ base: true }, '');
+  if (tab !== 'courses') {
+    // Pousser seulement si on vient de courses (évite l'empilement)
+    if (ongletActif === 'courses' || ongletActif === 'magasin') history.pushState({ nav: true }, '');
+  } else {
+    history.replaceState({ base: true }, '');
+  }
   document.getElementById('topbar-titre').textContent = {courses:'🛒 Courses',liste:'📋 Liste globale',enseignes:'⚙️ Paramètres',magasin:''}[tab] || '';
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
@@ -1353,7 +1357,7 @@ function toggleCarte(type) {
     carteOuverte = null;
   } else {
     carteOuverte = type;
-    history.pushState({ nav: true }, '');
+    history.replaceState({ nav: true }, '');
   }
   render();
   if (carteOuverte) {
@@ -1454,6 +1458,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
     </div>`;
 
   switchTab('magasin');
+  history.replaceState({ nav: true }, '');
 
   if (arts.length === 0) {
     const zoneSaisie = `
@@ -2070,11 +2075,10 @@ window.addEventListener('popstate', () => {
   else if (ouvert === 'onglet') switchTab('courses');
   else fermerModal(ouvert);
 
-  // Si après fermeture il reste encore quelque chose d'ouvert, repusher
+  // Mettre à jour l'état
   if (avoirQuelqueChoseOuvert()) {
-    history.pushState({ nav: true }, '');
+    history.replaceState({ nav: true }, '');
   } else {
-    // On est revenu à l'état de base
     history.replaceState({ base: true }, '');
   }
 });
@@ -2096,7 +2100,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  history.pushState({ nav: true }, '');
+  history.replaceState({ nav: true }, '');
 
   // Luminosité max
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
@@ -2377,7 +2381,7 @@ function encodeCode128(str) {
 // ===================== MODAUX =====================
 function ouvrirModal(id) {
   document.getElementById(id).classList.add('visible');
-  history.pushState({ nav: true }, '');
+  history.replaceState({ nav: true }, '');
 }
 function fermerModal(id) {
   const el = document.getElementById(id);
