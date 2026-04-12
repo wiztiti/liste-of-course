@@ -753,13 +753,13 @@
     <div class="modal-handle"></div>
     <div id="modal-courses-titre" onclick="fermerModal('modal-courses')" style="cursor:pointer;margin-bottom:8px;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:12px 16px;position:relative"></div>
     <div style="font-size:0.75rem;color:#aaa;text-align:center;padding:0 0 8px;line-height:1.6">
-      👆 Court : cocher &nbsp;|&nbsp; 👇 Long : supprimer
+      👆 Court : cocher &nbsp;|&nbsp; 👇 Long : modifier ou supprimer
     </div>
     <div id="modal-courses-liste"></div>
 
     <div id="btn-effacer-coches" style="margin-top:12px;text-align:center">
       <button onclick="effacerCoches()" style="background:none;border:none;color:#e74c3c;font-size:0.8rem;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;opacity:0.7;padding:4px 8px">
-        🗑️ Supprimer les produits achetés
+        🗑️ Supprimer tous les produits achetés
       </button>
     </div>
   </div>
@@ -783,8 +783,10 @@
       <select class="form-input" id="edit-article-enseigne"></select>
     </div>
     <div class="sep"></div>
-    <button class="btn-valider" onclick="validerArticleEdit()">Enregistrer</button>
-    <button class="btn-modal-fermer" style="background:#f0f0f0;color:#555;margin-top:8px" onclick="fermerModal('modal-edit-article')">Annuler</button>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button style="flex:1;padding:12px;background:#f0f0f0;color:#555;border:none;border-radius:16px;font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;cursor:pointer" onclick="fermerModal('modal-edit-article')">Annuler</button>
+      <button style="flex:1;padding:12px;background:linear-gradient(135deg,#4a90d9,#357abd);color:white;border:none;border-radius:16px;font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;cursor:pointer" onclick="validerArticleEdit()">Enregistrer</button>
+    </div>
   </div>
 </div>
 
@@ -1115,8 +1117,7 @@ function renderEnseignes() {
 let ongletActif = 'courses';
 function switchTab(tab) {
   ongletActif = tab;
-  if (tab !== 'courses') history.pushState({ niveau: 1 }, '');
-  else history.replaceState({ niveau: 0 }, '');
+  if (tab !== 'courses') history.pushState({ app: true }, '');
   ['courses','liste','enseignes'].forEach(t => {
     document.getElementById('page-' + t).style.display = t === tab ? 'block' : 'none';
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
@@ -1253,7 +1254,7 @@ function toggleCarte(type) {
     carteOuverte = null;
   } else {
     carteOuverte = type;
-    history.pushState({ niveau: 1 }, '');
+    history.pushState({ app: true }, '');
   }
   render();
   if (carteOuverte) {
@@ -1362,12 +1363,11 @@ function ouvrirCoursesEnseigne(enseigneId) {
       const isBarre = barre[a.id];
       return `
         <div class="modal-article ${isBarre ? 'barre' : ''}" id="ma-${a.id}" data-art-id="${a.id}">
+          <span onclick="supprimerArticleDepuisModal('${a.id}')" style="color:#e74c3c;font-size:1.1rem;flex-shrink:0;padding:0 6px 0 0;cursor:pointer;line-height:1">✕</span>
           <span class="chariot-icon" style="font-size:1.1rem;flex-shrink:0;display:${isBarre ? 'inline' : 'none'}">🛒</span>
           <span class="modal-art-nom" style="flex:1;padding:6px 0" 
-            onclick="toggleBarre('${a.id}')"
-            onpointerdown="artLongStart(event,'${a.id}')"
-            onpointerup="artLongEnd()"
-            onpointercancel="artLongEnd()">${a.nom}</span>
+            onclick="toggleBarre('${a.id}')">${a.nom}</span>
+          <span onclick="modifierArticleDepuisModal('${a.id}');event.stopPropagation()" style="color:#aaa;font-size:1rem;flex-shrink:0;padding:0 6px;cursor:pointer">✏️</span>
           <span class="modal-art-drag" 
             onpointerdown="artDragStart(event,'${a.id}')"
             onclick="event.stopPropagation()"
@@ -1382,33 +1382,14 @@ function ouvrirCoursesEnseigne(enseigneId) {
   ouvrirModal('modal-courses');
 }
 
-let artLongPressTimerItem = null;
-let artLongCurrentId = null;
 
-function artLongStart(e, id) {
-  artLongCurrentId = id;
-  artLongPressTimerItem = setTimeout(() => {
-    artLongCurrentId = null;
-    if (navigator.vibrate) navigator.vibrate(40);
-    const a = articles.find(x => x.id === id);
-    if (a) {
-      document.getElementById('modal-art-options-nom').textContent = a.nom;
-      artOptionsId = id;
-      ouvrirModal('modal-art-options');
-    }
-  }, 500);
-}
-
-function artLongEnd() {
-  clearTimeout(artLongPressTimerItem);
-  artLongCurrentId = null;
-}
 
 let artOptionsId = null;
 
-function supprimerArticleDepuisModal() {
-  if (!artOptionsId) return;
-  articles = articles.filter(a => a.id !== artOptionsId);
+function supprimerArticleDepuisModal(id) {
+  const artId = id || artOptionsId;
+  if (!artId) return;
+  articles = articles.filter(a => a.id !== artId);
   sauvegarder();
   fermerModal('modal-art-options');
   const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
@@ -1416,11 +1397,12 @@ function supprimerArticleDepuisModal() {
   render();
 }
 
-function modifierArticleDepuisModal() {
-  if (!artOptionsId) return;
+function modifierArticleDepuisModal(id) {
+  const artId = id || artOptionsId;
+  if (!artId) return;
   fermerModal('modal-art-options');
   fermerModal('modal-courses');
-  editerArticle(artOptionsId);
+  editerArticle(artId);
 }
 
 function toggleBarre(id) {
@@ -1545,13 +1527,26 @@ function effacerCoches() {
 }
 
 function afficherInputAjout() {
-  document.getElementById('btn-plus-ajout').style.display = 'none';
   const wrap = document.getElementById('input-ajout-wrap');
-  wrap.style.display = 'flex';
-  setTimeout(() => {
+  const btn = document.getElementById('btn-plus-ajout');
+  if (wrap.style.display === 'flex') {
+    // Fermer
+    wrap.style.display = 'none';
+    btn.textContent = '+';
+    btn.style.color = '#aaa';
+    btn.style.fontSize = '1.6rem';
+    const inp2 = document.getElementById('modal-cours-input');
+    if (inp2) inp2.value = '';
+  } else {
+    // Ouvrir
+    wrap.style.display = 'flex';
     const inp = document.getElementById('modal-cours-input');
-    if (inp) inp.focus();
-  }, 100);
+    if (inp) inp.value = '';
+    btn.textContent = '×';
+    btn.style.color = '#e74c3c';
+    btn.style.fontSize = '1.8rem';
+    setTimeout(() => { if (inp) inp.focus(); }, 100);
+  }
 }
 
 function cacherInputAjout() {
@@ -1919,40 +1914,35 @@ function pushModalState() {
   history.pushState({ modal: true }, '');
 }
 
-// Pousser l'état initial au chargement
-history.replaceState({ niveau: 0 }, '');
+// Système retour simplifié : on empile un état à chaque ouverture
+history.replaceState({ app: true }, '');
 
-window.addEventListener('popstate', e => {
-  const niveau = e.state && e.state.niveau || 0;
-
-  // Niveau 2 : modal fidélité
+function gererRetour() {
+  // Modal fidélité
   const mf = document.getElementById('modal-fidelite');
-  if (mf && mf.style.display === 'flex') {
-    fermerFidelite();
-    history.replaceState({ niveau: 1 }, '');
-    return;
-  }
+  if (mf && mf.style.display === 'flex') { fermerFidelite(); return true; }
 
-  // Niveau 2 : modal ouvert
+  // Modals ouverts
   const modals = ['modal-courses', 'modal-edit-enseigne', 'modal-edit-article',
                   'modal-confirm-suppr', 'modal-art-options', 'modal-choix'];
   for (const id of modals) {
     const el = document.getElementById(id);
-    if (el && el.classList.contains('visible')) {
-      fermerModal(id);
-      history.replaceState({ niveau: 1 }, '');
-      return;
-    }
+    if (el && el.classList.contains('visible')) { fermerModal(id); return true; }
   }
 
-  // Si pas sur l'onglet courses → y revenir
-  if (ongletActif !== 'courses') {
-    switchTab('courses');
-    history.replaceState({ niveau: 0 }, '');
-    return;
-  }
+  // Onglet secondaire → courses
+  if (ongletActif !== 'courses') { switchTab('courses'); return true; }
 
-  // Sur courses → laisser quitter l'app
+  return false; // rien à fermer → quitter
+}
+
+window.addEventListener('popstate', e => {
+  const handled = gererRetour();
+  if (handled) {
+    // Remettre l'état pour le prochain retour
+    history.pushState({ app: true }, '');
+  }
+  // Sinon on laisse le navigateur quitter
 });
 
 
@@ -1972,7 +1962,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  history.pushState({ niveau: 2 }, '');
+  history.pushState({ app: true }, '');
 
   // Luminosité max
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
@@ -2253,7 +2243,7 @@ function encodeCode128(str) {
 // ===================== MODAUX =====================
 function ouvrirModal(id) {
   document.getElementById(id).classList.add('visible');
-  history.pushState({ niveau: 2 }, '');
+  history.pushState({ app: true }, '');
 }
 function fermerModal(id) {
   document.getElementById(id).classList.remove('visible');
