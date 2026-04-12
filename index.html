@@ -27,7 +27,8 @@
   body {
     font-family: 'Nunito', sans-serif;
     min-height: 100dvh;
-    background: #ffffff;
+    background-color: #ffffff;
+    background-image: repeating-radial-gradient(circle at 0 0, transparent 0, #ffffff 12px), repeating-linear-gradient(#e0e0e055, #e0e0e0);
     padding: 0;
     touch-action: pan-y;
     display: flex;
@@ -1270,7 +1271,7 @@ function creerCarteMagasin(e, idx) {
   const hexToRgb = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
   const rgb = hexToRgb(bg);
   div.style.cssText = `
-    background: linear-gradient(135deg, rgba(${rgb},0.18) 0%, rgba(${rgb},0.07) 50%, rgba(${rgb},0.18) 100%);
+    background: linear-gradient(135deg, rgba(${rgb},0.18) 0%, rgba(${rgb},0.07) 50%, rgba(${rgb},0.18) 100%), white;
     border-left: 6px solid ${bg};
     border-right: 5px solid ${bg};
     border-top: none;
@@ -1311,7 +1312,7 @@ function creerEnseigneRowHTML(e) {
   const rgb = hexToRgb(bg);
   const fs = e.nom.length > 12 ? 1.0 : e.nom.length > 8 ? 1.15 : 1.3;
   return `
-    <div class="enseigne-row" style="background:linear-gradient(135deg,rgba(${rgb},0.18) 0%,rgba(${rgb},0.07) 50%,rgba(${rgb},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);display:flex;align-items:center;padding:0 16px;min-height:56px;margin-bottom:8px;position:relative">
+    <div class="enseigne-row" style="background:linear-gradient(135deg,rgba(${rgb},0.18) 0%,rgba(${rgb},0.07) 50%,rgba(${rgb},0.18) 100%),white;border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);display:flex;align-items:center;padding:0 16px;min-height:56px;margin-bottom:8px;position:relative">
       <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:${fs}rem;letter-spacing:2px;text-transform:uppercase;color:${tc};flex:1">${e.nom}</span>
       <div style="display:flex;gap:4px;flex-shrink:0">
         <button class="btn-small btn-edit" onclick="editEnseigne('${e.id}');event.stopPropagation()" style="background:#f0f0f0;color:#555;border:none;border-radius:8px;padding:4px 8px">✏️</button>
