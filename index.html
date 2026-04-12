@@ -35,25 +35,6 @@
     align-items: center;
   }
 
-  /* TOPBAR */
-  .topbar {
-    background: white;
-    padding: 14px 20px 10px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  .topbar-titre {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #2d2d44;
-  }
-
   /* TAB BAR */
   .tabbar {
     position: fixed;
@@ -702,22 +683,17 @@
 <body>
 
 <div class="app-wrap">
-  <!-- HEADER -->
-  <div class="topbar" id="topbar">
-    <span class="topbar-titre" id="topbar-titre">🛒 Courses</span>
-  </div>
-
   <!-- PAGES -->
   <div class="page" id="page-courses">
-    <div class="grille" id="grille"></div>
+    <div class="grille" id="grille" style="padding-top:8px"></div>
   </div>
 
   <div class="page" id="page-liste" style="display:none">
-    <div id="vue-liste" style="padding:12px 14px"></div>
+    <div id="vue-liste" style="padding:20px 14px 12px"></div>
   </div>
 
   <div class="page" id="page-enseignes" style="display:none">
-    <div id="vue-enseignes" style="padding:12px 14px"></div>
+    <div id="vue-enseignes" style="padding:20px 14px 12px"></div>
   </div>
 
   <div class="page" id="page-magasin" style="display:none">
@@ -1154,7 +1130,6 @@ let ongletActif = 'courses';
 let enseigneIdCourant = null;
 function switchTab(tab) {
   ongletActif = tab;
-  document.getElementById('topbar-titre').textContent = {courses:'🛒 Courses',liste:'📋 Liste globale',enseignes:'⚙️ Paramètres',magasin:''}[tab] || '';
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
     if (p) p.style.display = t === tab ? 'block' : 'none';
