@@ -1004,10 +1004,13 @@ function appliquerApparence() {
     'points': 'radial-gradient(#d0d0d0 1px, transparent 1px)',
     'grille': 'linear-gradient(#e0e0e0 1px,transparent 1px),linear-gradient(90deg,#e0e0e0 1px,transparent 1px)',
     'diagonales': 'repeating-linear-gradient(45deg,#e0e0e0 0,#e0e0e0 1px,transparent 0,transparent 50%)',
-    'vagues': 'repeating-radial-gradient(circle at 0 0,transparent 0,#ffffff 12px),repeating-linear-gradient(#e0e0e055,#e0e0e0)',
+    'vague1': 'url(%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%2720%27%3E%3Cpath d=%27M0 10 C25 0 75 20 100 10 C75 20 25 0 0 10Z%27 fill=%27none%27 stroke=%27%23bbf7d0%27 stroke-width=%271.5%27/%3E%3C/svg%3E%22)',
+    'vague2': 'url(%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27120%27 height=%2730%27%3E%3Cpath d=%27M0 15 C15 5 35 5 60 15 C85 25 105 25 120 15%27 fill=%27none%27 stroke=%27%2386efac%27 stroke-width=%271.5%27/%3E%3C/svg%3E%22)',
+    'vague3': 'url(%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%2740%27%3E%3Cpath d=%27M0 10 C25 2 75 18 100 10%27 fill=%27none%27 stroke=%27%23bbf7d0%27 stroke-width=%271%27/%3E%3Cpath d=%27M0 25 C25 17 75 33 100 25%27 fill=%27none%27 stroke=%27%23bbf7d0%27 stroke-width=%271%27/%3E%3C/svg%3E%22)',
+    'vague4': 'url(%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%2740%27%3E%3Cpath d=%27M0 20 C50 5 100 35 150 20 C175 12 190 8 200 20%27 fill=%27none%27 stroke=%27%2386efac%27 stroke-width=%271.5%27/%3E%3C/svg%3E%22)',
     'losanges': 'linear-gradient(135deg,#e0e0e0 25%,transparent 25%),linear-gradient(225deg,#e0e0e0 25%,transparent 25%),linear-gradient(315deg,#e0e0e0 25%,transparent 25%),linear-gradient(45deg,#e0e0e0 25%,transparent 25%)',
   };
-  const sizes = { 'points':'20px 20px','grille':'24px 24px','diagonales':'16px 16px','losanges':'16px 16px' };
+  const sizes = { 'points':'20px 20px','grille':'24px 24px','diagonales':'16px 16px','losanges':'16px 16px','vague1':'100px 20px','vague2':'120px 30px','vague3':'100px 40px','vague4':'200px 40px' };
   document.body.style.backgroundColor = apparence.couleur;
   document.body.style.backgroundImage = motifs[apparence.motif] || '';
   document.body.style.backgroundSize = sizes[apparence.motif] || '';
@@ -1111,8 +1114,8 @@ function renderEnseignes() {
   const aideOuverte = vue.dataset.aideOuverte === 'true';
   vue.innerHTML = `
     <!-- Section Apparence -->
-    <div onclick="toggleSection(this,'apparence')" style="text-align:center;padding:14px 16px;background:linear-gradient(135deg,#fce7f3,#fbcfe8);border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.08);cursor:pointer;margin-bottom:8px;border:1px solid #fbcfe8">
-      <span style="font-weight:800;font-size:1rem;color:#9d174d;letter-spacing:1px">🎨 Apparence</span>
+    <div onclick="toggleSection(this,'apparence')" style="text-align:center;padding:14px 16px;background:linear-gradient(135deg,#fefce8,#fef08a);border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.08);cursor:pointer;margin-bottom:8px;border:1px solid #fef08a">
+      <span style="font-weight:800;font-size:1rem;color:#854d0e;letter-spacing:1px">🎨 Couleur de l'app</span>
     </div>
     <div id="section-apparence" style="display:none;padding:0 4px;margin-bottom:16px">
       <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07)">
@@ -1125,7 +1128,7 @@ function renderEnseignes() {
         </div>
         <label style="font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px">Motif</label>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          ${[['aucun','Aucun',''],['points','Points','radial-gradient(#ccc 1px,transparent 1px)'],['grille','Grille','linear-gradient(#ddd 1px,transparent 1px),linear-gradient(90deg,#ddd 1px,transparent 1px)'],['diagonales','Diagonales','repeating-linear-gradient(45deg,#ddd 0,#ddd 1px,transparent 0,transparent 50%)'],['vagues','Vagues','repeating-radial-gradient(circle at 0 0,transparent 0,white 10px),repeating-linear-gradient(#ddd,#ddd)'],['losanges','Losanges','linear-gradient(135deg,#ddd 25%,transparent 25%),linear-gradient(225deg,#ddd 25%,transparent 25%),linear-gradient(315deg,#ddd 25%,transparent 25%),linear-gradient(45deg,#ddd 25%,transparent 25%)']].map(([id,nom,bg]) =>
+          ${[['aucun','Aucun',''],['points','Points','radial-gradient(#ccc 1px,transparent 1px)'],['grille','Grille','linear-gradient(#ddd 1px,transparent 1px),linear-gradient(90deg,#ddd 1px,transparent 1px)'],['diagonales','Diagonales','repeating-linear-gradient(45deg,#ddd 0,#ddd 1px,transparent 0,transparent 50%)'],['vague1','Vague 1',''],['vague2','Vague 2',''],['vague3','Vague 3',''],['vague4','Vague 4',''],['losanges','Losanges','linear-gradient(135deg,#ddd 25%,transparent 25%),linear-gradient(225deg,#ddd 25%,transparent 25%),linear-gradient(315deg,#ddd 25%,transparent 25%),linear-gradient(45deg,#ddd 25%,transparent 25%)']].map(([id,nom,bg]) =>
             `<div onclick="changerMotif('${id}')" style="height:50px;border-radius:10px;background-color:#f5f5f5;background-image:${bg};background-size:16px 16px;border:2px solid ${apparence.motif===id?'#333':'#eee'};cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><span style="font-size:0.65rem;font-weight:800;color:#555;background:rgba(255,255,255,0.8);padding:1px 4px;border-radius:4px">${nom}</span></div>`
           ).join('')}
         </div>
