@@ -1154,12 +1154,6 @@ let ongletActif = 'courses';
 let enseigneIdCourant = null;
 function switchTab(tab) {
   ongletActif = tab;
-  if (tab !== 'courses') {
-    // Pousser seulement si on vient de courses (évite l'empilement)
-    if (ongletActif === 'courses' || ongletActif === 'magasin') history.pushState({ nav: true }, '');
-  } else {
-    history.replaceState({ base: true }, '');
-  }
   document.getElementById('topbar-titre').textContent = {courses:'🛒 Courses',liste:'📋 Liste globale',enseignes:'⚙️ Paramètres',magasin:''}[tab] || '';
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
@@ -1357,7 +1351,6 @@ function toggleCarte(type) {
     carteOuverte = null;
   } else {
     carteOuverte = type;
-    history.replaceState({ nav: true }, '');
   }
   render();
   if (carteOuverte) {
@@ -1458,7 +1451,6 @@ function ouvrirCoursesEnseigne(enseigneId) {
     </div>`;
 
   switchTab('magasin');
-  history.replaceState({ nav: true }, '');
 
   if (arts.length === 0) {
     const zoneSaisie = `
@@ -2048,14 +2040,16 @@ document.addEventListener('touchend', e => {
 
 
 // Système retour : état de base = niveau 0, tout le reste = niveau 1
-// Système retour simple : un seul pushState quand on quitte courses
-history.replaceState({ base: true }, '');
+// ===================== BOUTON RETOUR ANDROID =====================
+// Approche : on pousse UN état quand on n'est pas sur courses/rien d'ouvert
+// Le retour consomme cet état et ferme ce qui est ouvert
+// Si on est déjà sur courses sans rien → quitter
 
-function avoirQuelqueChoseOuvert() {
+function etatEstOuvert() {
   const mf = document.getElementById('modal-fidelite');
   if (mf && mf.style.display === 'flex') return 'fidelite';
-  const modals = ['modal-edit-enseigne', 'modal-edit-article',
-                  'modal-confirm-suppr', 'modal-art-options', 'modal-choix'];
+  const modals = ['modal-edit-enseigne','modal-edit-article',
+                  'modal-confirm-suppr','modal-art-options','modal-choix'];
   for (const id of modals) {
     const el = document.getElementById(id);
     if (el && el.classList.contains('visible')) return id;
@@ -2064,24 +2058,31 @@ function avoirQuelqueChoseOuvert() {
   return null;
 }
 
-window.addEventListener('popstate', () => {
-  const ouvert = avoirQuelqueChoseOuvert();
-  if (!ouvert) {
-    // Rien d'ouvert, on est sur courses → quitter l'app
-    return;
+function majHistorique() {
+  if (etatEstOuvert()) {
+    history.replaceState({ ouvert: true }, '');
+  } else {
+    history.replaceState({ ouvert: false }, '');
   }
-  // Fermer ce qui est ouvert
+}
+
+window.addEventListener('popstate', e => {
+  const ouvert = etatEstOuvert();
+  if (!ouvert) return; // sur courses sans rien → quitter
+
+  // Fermer
   if (ouvert === 'fidelite') fermerFidelite();
   else if (ouvert === 'onglet') switchTab('courses');
   else fermerModal(ouvert);
 
-  // Mettre à jour l'état
-  if (avoirQuelqueChoseOuvert()) {
-    history.replaceState({ nav: true }, '');
-  } else {
-    history.replaceState({ base: true }, '');
+  // Repousser un état pour le prochain retour si encore ouvert
+  if (etatEstOuvert()) {
+    history.pushState({ ouvert: true }, '');
   }
 });
+
+// Pousser l'état initial
+history.replaceState({ ouvert: false }, '');
 
 
 // ===================== CARTE FIDÉLITÉ =====================
@@ -2100,7 +2101,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  history.replaceState({ nav: true }, '');
+  history.pushState({ ouvert: true }, '');
 
   // Luminosité max
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
@@ -2381,7 +2382,7 @@ function encodeCode128(str) {
 // ===================== MODAUX =====================
 function ouvrirModal(id) {
   document.getElementById(id).classList.add('visible');
-  history.replaceState({ nav: true }, '');
+  history.pushState({ ouvert: true }, '');
 }
 function fermerModal(id) {
   const el = document.getElementById(id);
