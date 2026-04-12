@@ -684,13 +684,13 @@
 
 <div class="app-wrap">
   <!-- PAGES -->
-  <div class="page" id="page-courses">
+  <div class="page" id="page-courses" style="display:flex;flex-direction:column;justify-content:center;min-height:calc(100dvh - 60px)">
     <div class="grille" id="grille" style="padding-top:8px"></div>
   </div>
 
   <div class="page" id="page-liste" style="display:none">
     <div id="vue-liste" style="padding:20px 14px 12px"></div>
-    <button onclick="partagerListe()" style="position:fixed;bottom:76px;right:20px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:white;border:none;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 16px rgba(14,165,233,0.4);z-index:500;display:none" id="btn-partager">↗</button>
+    <button onclick="partagerListe()" style="position:fixed;bottom:76px;right:16px;width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:white;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(14,165,233,0.4);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1px" id="btn-partager"><span style="font-size:1.3rem">📤</span><span style="font-size:0.6rem;font-weight:800;font-family:'Nunito',sans-serif;letter-spacing:0.5px">PARTAGER</span></button>
   </div>
 
   <div class="page" id="page-enseignes" style="display:none">
