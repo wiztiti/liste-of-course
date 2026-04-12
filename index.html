@@ -1411,6 +1411,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
     </div>`;
 
   switchTab('magasin');
+  history.pushState({ ouvert: true }, '');
 
   if (arts.length === 0) {
     const zoneSaisie = `
