@@ -83,13 +83,13 @@
     transition: color 0.2s;
   }
   .tab.active { color: #2d2d44; }
-  .tab.active .tab-icon,
-  .tab.active .tab-label {
-    background: #e8f0fe;
-    border-radius: 20px;
-    padding: 2px 10px;
+  .tab.active .tab-icon {
+    display: block;
+    background: radial-gradient(ellipse at center, #e0f2fe 0%, #bae6fd 50%, transparent 100%);
+    border-radius: 50%;
+    padding: 6px 10px;
+    box-shadow: 0 0 10px 4px rgba(186,230,253,0.6);
   }
-  .tab.active .tab-icon { display: block; padding: 4px 12px; }
   .tab-icon { font-size: 1.4rem; }
   .tab-label { font-size: 0.7rem; font-weight: 800; font-family: 'Nunito', sans-serif; letter-spacing: 0.5px; }
 
@@ -1117,7 +1117,9 @@ function switchTab(tab) {
     const p = document.getElementById('page-' + t);
     if (p) p.style.display = t === tab ? 'block' : 'none';
     const tb = document.getElementById('tab-' + t);
-    if (tb) tb.classList.toggle('active', t === tab);
+    // Page magasin = sous-page de courses, garder courses actif
+    const tabActif = tab === 'magasin' ? 'courses' : tab;
+    if (tb) tb.classList.toggle('active', t === tabActif);
   });
   if (tab === 'liste') renderListe();
   if (tab === 'enseignes') renderEnseignes();
