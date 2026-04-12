@@ -732,11 +732,11 @@
     </button>
     <button class="tab" id="tab-liste" onclick="switchTab('liste')">
       <span class="tab-icon">📋</span>
-      <span class="tab-label">Ma liste</span>
+      <span class="tab-label">Liste globale</span>
     </button>
     <button class="tab" id="tab-enseignes" onclick="switchTab('enseignes')">
-      <span class="tab-icon">🏪</span>
-      <span class="tab-label">Enseignes</span>
+      <span class="tab-icon">⚙️</span>
+      <span class="tab-label">Paramètres</span>
     </button>
   </nav>
 </div><!-- /app-wrap -->
@@ -1084,6 +1084,11 @@ function renderListe() {
   const vue = document.getElementById('vue-liste');
   if (!vue) return;
   vue.innerHTML = `
+    <div style="text-align:right;margin-bottom:8px">
+      <button onclick="partagerListe()" style="background:none;border:none;color:#38bdf8;font-size:0.85rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif">
+        ↗️ Partager
+      </button>
+    </div>
     <div id="liste-articles">${renderArticles()}</div>
     <div id="zone-ajout-liste" style="margin-top:4px">
       <button id="btn-plus-liste" onclick="afficherInputListe()" style="background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer;padding:4px 12px;font-weight:300;line-height:1">+</button>
@@ -1100,19 +1105,58 @@ function renderListe() {
 function renderEnseignes() {
   const vue = document.getElementById('vue-enseignes');
   if (!vue) return;
+  const magasinsOuverts = vue.dataset.magasinsOuverts === 'true';
+  const aideOuverte = vue.dataset.aideOuverte === 'true';
   vue.innerHTML = `
-    <div class="section-titre">Mes enseignes</div>
-    ${enseignes.map(e => creerEnseigneRowHTML(e)).join('')}
-    <button class="btn-add-enseigne" onclick="ajouterEnseigne()" style="margin-top:12px">＋ Ajouter une enseigne</button>`;
+    <!-- Section Gestion des magasins -->
+    <div onclick="toggleSection(this,'magasins')" style="text-align:center;padding:14px 16px;background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.08);cursor:pointer;margin-bottom:8px;border:1px solid #bae6fd">
+      <span style="font-weight:800;font-size:1rem;color:#0369a1;letter-spacing:1px">🏪 Gestion des magasins</span>
+    </div>
+    <div id="section-magasins" style="display:${magasinsOuverts ? 'block' : 'none'};padding:0 4px;margin-bottom:16px">
+      ${enseignes.map(e => creerEnseigneRowHTML(e)).join('')}
+      <button class="btn-add-enseigne" onclick="ajouterEnseigne()" style="margin-top:12px">＋ Ajouter une enseigne</button>
+    </div>
+
+    <!-- Section Aide -->
+    <div onclick="toggleSection(this,'aide')" style="text-align:center;padding:14px 16px;background:linear-gradient(135deg,#f0fdf4,#bbf7d0);border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.08);cursor:pointer;margin-bottom:8px;border:1px solid #bbf7d0">
+      <span style="font-weight:800;font-size:1rem;color:#15803d;letter-spacing:1px">ℹ️ Aide</span>
+    </div>
+    <div id="section-aide" style="display:${aideOuverte ? 'block' : 'none'};background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07);font-size:0.88rem;color:#555;line-height:1.7;margin-bottom:8px">
+      <p style="margin-bottom:10px"><strong>🛒 Courses</strong> — Vos magasins avec des articles. Tapez pour ouvrir.</p>
+      <p style="margin-bottom:10px"><strong>📋 Liste globale</strong> — Tous vos articles groupés par enseigne.</p>
+      <p style="margin-bottom:10px"><strong>Dans un magasin</strong><br>
+        👆 Tap court : cocher un article acheté<br>
+        <span style="color:#e74c3c">✕</span> Croix rouge : supprimer<br>
+        ✏️ Crayon : modifier<br>
+        ☰ Barres : réordonner par glissement<br>
+        + : ajouter un produit
+      </p>
+      <p style="margin-bottom:10px"><strong>Navigation</strong><br>
+        Glisser à droite/gauche : changer d'onglet<br>
+        ‹ Flèche dans le magasin : retour aux courses<br>
+        Bouton retour : ferme l'écran en cours
+      </p>
+      <p><strong>Carte de fidélité</strong> — Dans Gestion des magasins → modifier → saisir le numéro de carte.</p>
+      <p style="margin-top:16px;text-align:center;color:#bbb;font-size:0.78rem">© 04-2026 — Tous droits réservés — F. Lepreux</p>
+    </div>`;
+}
+
+function toggleSection(header, section) {
+  const content = document.getElementById('section-' + section);
+  const vue = document.getElementById('vue-enseignes');
+  const isOpen = content.style.display !== 'none';
+  content.style.display = isOpen ? 'none' : 'block';
+  vue.dataset[section + 'Ouverts'] = !isOpen;
+  if (section === 'aide') vue.dataset.aideOuverte = !isOpen;
 }
 
 let ongletActif = 'courses';
 let enseigneIdCourant = null;
 function switchTab(tab) {
   ongletActif = tab;
-  if (tab !== 'courses') history.pushState({ niveau: 1 }, '');
-  else history.replaceState({ niveau: 0 }, '');
-  document.getElementById('topbar-titre').textContent = {courses:'🛒 Courses',liste:'📋 Ma liste',enseignes:'🏪 Enseignes',magasin:''}[tab] || '';
+  if (tab !== 'courses') history.pushState({ nav: true }, '');
+  else history.replaceState({ base: true }, '');
+  document.getElementById('topbar-titre').textContent = {courses:'🛒 Courses',liste:'📋 Liste globale',enseignes:'⚙️ Paramètres',magasin:''}[tab] || '';
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
     if (p) p.style.display = t === tab ? 'block' : 'none';
@@ -1149,11 +1193,16 @@ function creerCarteListe() {
   div.innerHTML = `
     <div class="carte-header" onclick="toggleCarte('liste')">
       <div class="carte-logo" style="background:#2d2d44;color:white;font-size:1.5rem">📝</div>
-      <div class="carte-nom">Ma liste de courses</div>
+      <div class="carte-nom">Liste globale de courses</div>
       ${total > 0 ? `<div class="badge">${total}</div>` : ''}
     </div>
     <div class="corps-liste" id="corps-liste">
-      <div id="liste-articles">${renderArticles()}</div>
+      <div style="text-align:right;margin-bottom:8px">
+      <button onclick="partagerListe()" style="background:none;border:none;color:#38bdf8;font-size:0.85rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif">
+        ↗️ Partager
+      </button>
+    </div>
+    <div id="liste-articles">${renderArticles()}</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <input type="text" id="input-article" placeholder="Ajouter un article…" onkeydown="if(event.key==='Enter')ajouterArticle()" style="width:100%;border:2px solid #eee;border-radius:12px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:0.92rem;outline:none;">
         <div style="display:flex;gap:8px">
@@ -1170,6 +1219,35 @@ function optionsEnseignes() {
   return enseignes.map(e => `<option value="${e.id}">${e.nom}</option>`).join('');
 }
 
+function partagerListe() {
+  if (articles.length === 0) { alert('Aucun article à partager !'); return; }
+
+  // Grouper par enseigne, triées par nb d'articles
+  const groupes = {};
+  articles.forEach(a => {
+    if (!groupes[a.enseigneId]) groupes[a.enseigneId] = [];
+    groupes[a.enseigneId].push(a);
+  });
+  const enseignesTriees = Object.keys(groupes).sort((a, b) => groupes[b].length - groupes[a].length);
+
+  let texte = 'Liste de courses\n\n';
+  enseignesTriees.forEach(ensId => {
+    const e = enseignes.find(x => x.id === ensId);
+    texte += (e ? e.nom.toUpperCase() : '?') + '\n';
+    groupes[ensId].forEach(a => {
+      texte += '- ' + a.nom + '\n';
+    });
+    texte += '\n';
+  });
+
+  if (navigator.share) {
+    navigator.share({ text: texte.trim() });
+  } else {
+    // Fallback : copier dans le presse-papiers
+    navigator.clipboard.writeText(texte.trim()).then(() => alert('Liste copiée !'));
+  }
+}
+
 function hexToRgbInline(h) {
   const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);
   return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128';
@@ -1177,17 +1255,31 @@ function hexToRgbInline(h) {
 
 function renderArticles() {
   if (articles.length === 0) return '<div class="vide">Aucun article pour l\'instant 😊</div>';
-  return articles.map(a => {
-    const e = enseignes.find(x => x.id === a.enseigneId);
+
+  // Grouper par enseigne, triées par nb d'articles décroissant
+  const groupes = {};
+  articles.forEach(a => {
+    if (!groupes[a.enseigneId]) groupes[a.enseigneId] = [];
+    groupes[a.enseigneId].push(a);
+  });
+  const enseignesTriees = Object.keys(groupes).sort((a, b) => groupes[b].length - groupes[a].length);
+
+  return enseignesTriees.map(ensId => {
+    const e = enseignes.find(x => x.id === ensId);
     const bg = e ? (e.couleur || '#888') : '#888';
     const tc = e ? (e.texteCouleur || e.couleur || '#333') : '#333';
-    return `
-      <div style="display:flex;align-items:center;gap:8px;padding:3px 4px">
-        <span onclick="supprimerArticle('${a.id}')" style="color:#e74c3c;font-size:1.1rem;flex-shrink:0;padding:0 6px 0 0;cursor:pointer;line-height:1">✕</span>
-        <span style="flex:1;font-weight:700;font-size:0.88rem;color:#333">${a.nom}</span>
-        <span style="font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:20px;background:linear-gradient(135deg,rgba(${hexToRgbInline(bg)},0.18) 0%,rgba(${hexToRgbInline(bg)},0.07) 100%);border-left:3px solid ${bg};color:${tc};white-space:nowrap">${e ? e.nom : '?'}</span>
-        <span onclick="editerArticle('${a.id}')" style="color:#aaa;font-size:0.8rem;flex-shrink:0;padding:0 4px;cursor:pointer">✏️</span>
-      </div>`;
+    const rgb = hexToRgbInline(bg);
+    const items = groupes[ensId].map(a => {
+      const coche = barre[a.id] ? true : false;
+      return `
+        <div style="display:flex;align-items:center;gap:8px;padding:3px 4px;${coche ? 'opacity:0.6' : ''}">
+          <span onclick="supprimerArticle('${a.id}')" style="color:#e74c3c;font-size:1.1rem;flex-shrink:0;padding:0 6px 0 0;cursor:pointer;line-height:1">✕</span>
+          <span style="flex:1;font-weight:700;font-size:0.88rem;${coche ? 'text-decoration:line-through;text-decoration-color:#333;text-decoration-thickness:2px;font-style:italic;color:#999' : 'color:#333'}">${a.nom}</span>
+          <span style="font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:20px;background:linear-gradient(135deg,rgba(${rgb},0.18) 0%,rgba(${rgb},0.07) 100%);border-left:3px solid ${bg};color:${tc};white-space:nowrap">${e ? e.nom : '?'}</span>
+          <span onclick="editerArticle('${a.id}')" style="color:#aaa;font-size:0.8rem;flex-shrink:0;padding:0 4px;cursor:pointer">✏️</span>
+        </div>`;
+    }).join('');
+    return items;
   }).join('');
 }
 
@@ -1261,7 +1353,7 @@ function toggleCarte(type) {
     carteOuverte = null;
   } else {
     carteOuverte = type;
-    history.pushState({ niveau: 1 }, '');
+    history.pushState({ nav: true }, '');
   }
   render();
   if (carteOuverte) {
@@ -1433,13 +1525,10 @@ function modifierArticleDepuisModal(id) {
 function toggleBarre(id) {
   barre[id] = !barre[id];
   sauvegarder();
-  const el = document.getElementById('ma-' + id);
-  if (!el) return;
-  el.classList.toggle('barre', barre[id]);
-  // Rafraîchir toute la liste pour déplacer l'article en bas
-  const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
-  ouvrirCoursesEnseigne(ensId);
-
+  const ensId = document.getElementById('modal-courses-titre')?.dataset.enseigneId;
+  if (ensId) ouvrirCoursesEnseigne(ensId);
+  // Mettre à jour la liste globale si visible
+  if (ongletActif === 'liste') renderListe();
 }
 
 
@@ -1951,49 +2040,43 @@ document.addEventListener('touchend', e => {
 }, { passive: true });
 
 // ===================== BOUTON RETOUR ANDROID =====================
-function pushModalState() {
-  history.pushState({ modal: true }, '');
-}
+
 
 // Système retour : état de base = niveau 0, tout le reste = niveau 1
-history.replaceState({ niveau: 0 }, '');
+// Système retour simple : un seul pushState quand on quitte courses
+history.replaceState({ base: true }, '');
 
-function niveauActuel() {
+function avoirQuelqueChoseOuvert() {
   const mf = document.getElementById('modal-fidelite');
-  if (mf && mf.style.display === 'flex') return 2;
+  if (mf && mf.style.display === 'flex') return 'fidelite';
   const modals = ['modal-edit-enseigne', 'modal-edit-article',
                   'modal-confirm-suppr', 'modal-art-options', 'modal-choix'];
   for (const id of modals) {
     const el = document.getElementById(id);
-    if (el && el.classList.contains('visible')) return 2;
+    if (el && el.classList.contains('visible')) return id;
   }
-  if (ongletActif !== 'courses') return 1;
-  return 0;
+  if (ongletActif !== 'courses') return 'onglet';
+  return null;
 }
 
-window.addEventListener('popstate', e => {
-  const mf = document.getElementById('modal-fidelite');
-  if (mf && mf.style.display === 'flex') {
-    fermerFidelite();
-    history.pushState({ niveau: 1 }, '');
+window.addEventListener('popstate', () => {
+  const ouvert = avoirQuelqueChoseOuvert();
+  if (!ouvert) {
+    // Rien d'ouvert, on est sur courses → quitter l'app
     return;
   }
-  const modals = ['modal-edit-enseigne', 'modal-edit-article',
-                  'modal-confirm-suppr', 'modal-art-options', 'modal-choix'];
-  for (const id of modals) {
-    const el = document.getElementById(id);
-    if (el && el.classList.contains('visible')) {
-      fermerModal(id);
-      if (niveauActuel() > 0) history.pushState({ niveau: 1 }, '');
-      return;
-    }
+  // Fermer ce qui est ouvert
+  if (ouvert === 'fidelite') fermerFidelite();
+  else if (ouvert === 'onglet') switchTab('courses');
+  else fermerModal(ouvert);
+
+  // Si après fermeture il reste encore quelque chose d'ouvert, repusher
+  if (avoirQuelqueChoseOuvert()) {
+    history.pushState({ nav: true }, '');
+  } else {
+    // On est revenu à l'état de base
+    history.replaceState({ base: true }, '');
   }
-  if (ongletActif !== 'courses') {
-    switchTab('courses');
-    // Ne pas repusher — on est revenu à niveau 0
-    return;
-  }
-  // niveau 0 + courses → quitter (laisser le navigateur agir)
 });
 
 
@@ -2013,7 +2096,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  history.pushState({ niveau: 2 }, '');
+  history.pushState({ nav: true }, '');
 
   // Luminosité max
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
@@ -2294,7 +2377,7 @@ function encodeCode128(str) {
 // ===================== MODAUX =====================
 function ouvrirModal(id) {
   document.getElementById(id).classList.add('visible');
-  history.pushState({ niveau: 2 }, '');
+  history.pushState({ nav: true }, '');
 }
 function fermerModal(id) {
   const el = document.getElementById(id);
