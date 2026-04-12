@@ -690,6 +690,7 @@
 
   <div class="page" id="page-liste" style="display:none">
     <div id="vue-liste" style="padding:20px 14px 12px"></div>
+    <button onclick="partagerListe()" style="position:fixed;bottom:76px;right:20px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:white;border:none;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 16px rgba(14,165,233,0.4);z-index:500;display:none" id="btn-partager">↗</button>
   </div>
 
   <div class="page" id="page-enseignes" style="display:none">
@@ -1060,11 +1061,6 @@ function renderListe() {
   const vue = document.getElementById('vue-liste');
   if (!vue) return;
   vue.innerHTML = `
-    <div style="text-align:right;margin-bottom:8px">
-      <button onclick="partagerListe()" style="background:none;border:none;color:#38bdf8;font-size:0.85rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif">
-        ↗️ Partager
-      </button>
-    </div>
     <div id="liste-articles">${renderArticles()}</div>
     <div id="zone-ajout-liste" style="margin-top:4px">
       <button id="btn-plus-liste" onclick="afficherInputListe()" style="background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer;padding:4px 12px;font-weight:300;line-height:1">+</button>
@@ -1140,6 +1136,8 @@ function switchTab(tab) {
   });
   if (tab === 'liste') renderListe();
   if (tab === 'enseignes') renderEnseignes();
+  const btnP = document.getElementById('btn-partager');
+  if (btnP) btnP.style.display = tab === 'liste' ? 'flex' : 'none';
   // magasin : déjà rendu par ouvrirCoursesEnseigne
 }
 
@@ -1170,12 +1168,7 @@ function creerCarteListe() {
       ${total > 0 ? `<div class="badge">${total}</div>` : ''}
     </div>
     <div class="corps-liste" id="corps-liste">
-      <div style="text-align:right;margin-bottom:8px">
-      <button onclick="partagerListe()" style="background:none;border:none;color:#38bdf8;font-size:0.85rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif">
-        ↗️ Partager
-      </button>
-    </div>
-    <div id="liste-articles">${renderArticles()}</div>
+      <div id="liste-articles">${renderArticles()}</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <input type="text" id="input-article" placeholder="Ajouter un article…" onkeydown="if(event.key==='Enter')ajouterArticle()" style="width:100%;border:2px solid #eee;border-radius:12px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:0.92rem;outline:none;">
         <div style="display:flex;gap:8px">
