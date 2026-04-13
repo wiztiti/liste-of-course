@@ -685,8 +685,9 @@
 
 <div class="app-wrap">
   <!-- PAGES -->
-  <div class="page" id="page-courses" style="display:flex;flex-direction:column;justify-content:center;min-height:calc(100dvh - 60px);padding-top:40px">
-    <div class="grille" id="grille" style="padding-top:8px"></div>
+  <div class="page" id="page-courses" style="display:flex;flex-direction:column;justify-content:center;min-height:calc(100dvh - 60px);padding-top:8px">
+    <div id="header-courses" style="text-align:center;padding:8px 16px 4px"></div>
+    <div class="grille" id="grille"></div>
   </div>
 
   <div class="page" id="page-liste" style="display:none">
@@ -989,8 +990,17 @@ const DEFAUT_ARTICLES = [
 ];
 
 // Préférences d'apparence
-const DEFAUT_APPARENCE = { couleur: '#f0fdf4', motif: 'grille', couleurMotif: '#bbf7d0' };
-const APPARENCE_VERSION = 'v2';
+const SCENES = {
+  plage: { label: '🏖️ Plage', svg: `<rect width="400" height="80" fill="#bae6fd"/><circle cx="340" cy="22" r="14" fill="#fde68a"/><line x1="340" y1="4" x2="340" y2="1" stroke="#fde68a" stroke-width="2"/><line x1="356" y1="8" x2="358" y2="6" stroke="#fde68a" stroke-width="2"/><line x1="362" y1="22" x2="365" y2="22" stroke="#fde68a" stroke-width="2"/><line x1="324" y1="8" x2="322" y2="6" stroke="#fde68a" stroke-width="2"/><line x1="318" y1="22" x2="315" y2="22" stroke="#fde68a" stroke-width="2"/><rect x="0" y="52" width="400" height="28" fill="#38bdf8"/><path d="M0 52 Q50 46 100 52 Q150 58 200 52 Q250 46 300 52 Q350 58 400 52" fill="#7dd3fc" opacity="0.5"/><ellipse cx="200" cy="80" rx="300" ry="18" fill="#fde68a"/><line x1="120" y1="72" x2="145" y2="35" stroke="#92400e" stroke-width="2.5"/><ellipse cx="145" cy="33" rx="28" ry="8" fill="#ef4444"/><ellipse cx="145" cy="30" rx="28" ry="8" fill="#f97316"/><ellipse cx="145" cy="27" rx="22" ry="6" fill="#ef4444"/><ellipse cx="145" cy="24" rx="14" ry="4" fill="#f97316"/><ellipse cx="115" cy="70" rx="22" ry="5" fill="#a78bfa"/><rect x="155" y="60" width="12" height="10" rx="2" fill="#fb923c"/><path d="M60 20 Q65 17 70 20" fill="none" stroke="white" stroke-width="1.5"/><path d="M200 15 Q206 12 212 15" fill="none" stroke="white" stroke-width="1.5"/><path d="M270 28 Q275 25 280 28" fill="none" stroke="white" stroke-width="1.5"/>` },
+  montagne: { label: '🏔️ Montagne', svg: `<rect width="400" height="80" fill="#dbeafe"/><polygon points="60,55 110,15 160,55" fill="white" opacity="0.9"/><polygon points="90,55 150,8 210,55" fill="#e0f2fe"/><polygon points="200,55 260,12 320,55" fill="white" opacity="0.9"/><polygon points="280,55 330,20 380,55" fill="#e0f2fe"/><polygon points="110,15 100,25 120,25" fill="white"/><polygon points="150,8 138,20 162,20" fill="white"/><polygon points="260,12 248,24 272,24" fill="white"/><polygon points="330,20 320,30 340,30" fill="white"/><rect x="0" y="55" width="400" height="25" fill="white"/><path d="M0 55 Q40 50 80 55 Q120 60 160 55 Q200 50 240 55 Q280 60 320 55 Q360 50 400 55" fill="#e0f2fe"/><rect x="130" y="32" width="80" height="28" fill="#92400e"/><rect x="125" y="28" width="90" height="8" fill="#78350f"/><polygon points="120,32 170,14 220,32" fill="#b45309"/><polygon points="122,32 170,16 218,32 170,29" fill="white" opacity="0.7"/><rect x="158" y="45" width="24" height="15" rx="2" fill="#fde68a"/><rect x="135" y="38" width="16" height="12" rx="2" fill="#bae6fd"/><line x1="143" y1="38" x2="143" y2="50" stroke="white" stroke-width="1"/><line x1="135" y1="44" x2="151" y2="44" stroke="white" stroke-width="1"/><rect x="140" y="20" width="40" height="8" rx="2" fill="#fef9c3"/>` },
+  campagne: { label: '🐄 Campagne', svg: `<rect width="400" height="80" fill="#7dd3fc"/><circle cx="60" cy="18" r="12" fill="#fde68a"/><ellipse cx="160" cy="18" rx="30" ry="12" fill="white"/><ellipse cx="145" cy="20" rx="20" ry="10" fill="white"/><ellipse cx="175" cy="20" rx="20" ry="10" fill="white"/><ellipse cx="300" cy="22" rx="25" ry="10" fill="white"/><ellipse cx="100" cy="80" rx="160" ry="40" fill="#4ade80"/><ellipse cx="320" cy="80" rx="140" ry="35" fill="#86efac"/><rect x="0" y="58" width="400" height="22" fill="#4ade80"/><rect x="280" y="38" width="60" height="30" fill="#fef3c7"/><polygon points="275,40 310,22 345,40" fill="#ef4444"/><rect x="298" y="52" width="14" height="16" rx="1" fill="#92400e"/><rect x="285" y="44" width="12" height="10" rx="1" fill="#bae6fd"/><line x1="200" y1="60" x2="280" y2="60" stroke="#92400e" stroke-width="1.5"/><line x1="210" y1="56" x2="210" y2="64" stroke="#92400e" stroke-width="1.5"/><line x1="230" y1="56" x2="230" y2="64" stroke="#92400e" stroke-width="1.5"/><line x1="250" y1="56" x2="250" y2="64" stroke="#92400e" stroke-width="1.5"/><ellipse cx="130" cy="62" rx="22" ry="12" fill="white"/><ellipse cx="148" cy="56" rx="10" ry="8" fill="white"/><ellipse cx="125" cy="60" rx="7" ry="5" fill="#374151" opacity="0.8"/><ellipse cx="154" cy="55" rx="8" ry="7" fill="white"/><ellipse cx="157" cy="57" rx="4" ry="3" fill="#fde68a"/><circle cx="151" cy="52" r="1.5" fill="#374151"/><line x1="150" y1="49" x2="147" y2="44" stroke="#92400e" stroke-width="1.5"/><line x1="155" y1="49" x2="158" y2="44" stroke="#92400e" stroke-width="1.5"/><line x1="118" y1="72" x2="118" y2="80" stroke="#374151" stroke-width="2"/><line x1="126" y1="72" x2="126" y2="80" stroke="#374151" stroke-width="2"/><line x1="136" y1="72" x2="136" y2="80" stroke="#374151" stroke-width="2"/><line x1="144" y1="72" x2="144" y2="80" stroke="#374151" stroke-width="2"/><circle cx="50" cy="65" r="3" fill="#f9a8d4"/><circle cx="70" cy="67" r="3" fill="#f9a8d4"/><line x1="360" y1="75" x2="360" y2="50" stroke="#92400e" stroke-width="2"/><ellipse cx="360" cy="44" rx="14" ry="12" fill="#22c55e"/>` },
+  travaux: { label: '🚧 Travaux', svg: `<rect width="400" height="80" fill="#cbd5e1"/><ellipse cx="100" cy="15" rx="50" ry="15" fill="white" opacity="0.8"/><ellipse cx="250" cy="20" rx="60" ry="14" fill="white" opacity="0.7"/><rect x="0" y="62" width="400" height="18" fill="#92400e"/><rect x="0" y="62" width="400" height="4" fill="#78350f"/><ellipse cx="200" cy="64" rx="80" ry="10" fill="#451a03"/><line x1="300" y1="75" x2="300" y2="10" stroke="#f59e0b" stroke-width="4"/><line x1="300" y1="10" x2="370" y2="10" stroke="#f59e0b" stroke-width="4"/><line x1="300" y1="10" x2="260" y2="10" stroke="#f59e0b" stroke-width="3"/><line x1="340" y1="10" x2="340" y2="35" stroke="#94a3b8" stroke-width="1.5"/><rect x="330" y="35" width="20" height="14" fill="#f59e0b"/><rect x="100" y="56" width="40" height="8" fill="#f97316"/><line x1="100" y1="56" x2="140" y2="64" stroke="white" stroke-width="2"/><line x1="120" y1="56" x2="140" y2="60" stroke="white" stroke-width="2"/><rect x="148" y="56" width="40" height="8" fill="#f97316"/><line x1="148" y1="56" x2="188" y2="64" stroke="white" stroke-width="2"/><polygon points="60,25 80,55 40,55" fill="#f59e0b"/><line x1="60" y1="55" x2="60" y2="68" stroke="#94a3b8" stroke-width="2"/><circle cx="180" cy="46" r="6" fill="#fde68a"/><path d="M174 46 Q180 38 186 46" fill="#f59e0b"/><rect x="176" y="52" width="8" height="10" fill="#f97316"/>` },
+  sport: { label: '🏃 Sport', svg: `<rect width="400" height="80" fill="#fed7aa"/><circle cx="200" cy="80" r="40" fill="#fb923c" opacity="0.6"/><circle cx="200" cy="80" r="28" fill="#fde68a" opacity="0.8"/><line x1="40" y1="70" x2="40" y2="45" stroke="#92400e" stroke-width="2"/><ellipse cx="40" cy="40" rx="14" ry="12" fill="#22c55e"/><line x1="70" y1="72" x2="70" y2="50" stroke="#92400e" stroke-width="2"/><ellipse cx="70" cy="45" rx="12" ry="10" fill="#16a34a"/><line x1="330" y1="70" x2="330" y2="45" stroke="#92400e" stroke-width="2"/><ellipse cx="330" cy="40" rx="14" ry="12" fill="#22c55e"/><ellipse cx="200" cy="75" rx="140" ry="12" fill="#f97316" opacity="0.4"/><ellipse cx="200" cy="75" rx="130" ry="9" fill="none" stroke="white" stroke-width="1.5" stroke-dasharray="8,6"/><rect x="0" y="68" width="400" height="12" fill="#4ade80"/><circle cx="160" cy="50" r="6" fill="#fde68a"/><line x1="160" y1="56" x2="160" y2="68" stroke="#3b82f6" stroke-width="2.5"/><line x1="160" y1="60" x2="150" y2="65" stroke="#3b82f6" stroke-width="2"/><line x1="160" y1="60" x2="170" y2="63" stroke="#3b82f6" stroke-width="2"/><line x1="160" y1="68" x2="152" y2="76" stroke="#1d4ed8" stroke-width="2"/><line x1="160" y1="68" x2="168" y2="74" stroke="#1d4ed8" stroke-width="2"/><circle cx="230" cy="48" r="6" fill="#fde68a"/><line x1="230" y1="54" x2="230" y2="66" stroke="#ef4444" stroke-width="2.5"/><line x1="230" y1="58" x2="220" y2="62" stroke="#ef4444" stroke-width="2"/><line x1="230" y1="58" x2="240" y2="64" stroke="#ef4444" stroke-width="2"/><line x1="230" y1="66" x2="222" y2="74" stroke="#dc2626" stroke-width="2"/><line x1="230" y1="66" x2="238" y2="73" stroke="#dc2626" stroke-width="2"/>` },
+  foire: { label: '🎪 Fête foraine', svg: `<rect width="400" height="80" fill="#1e1b4b"/><circle cx="30" cy="10" r="1.5" fill="#fde68a"/><circle cx="200" cy="8" r="1" fill="#fde68a"/><circle cx="340" cy="10" r="1" fill="#fde68a"/><circle cx="320" cy="38" r="28" fill="none" stroke="#f59e0b" stroke-width="2"/><circle cx="320" cy="38" r="4" fill="#f59e0b"/><line x1="320" y1="10" x2="320" y2="66" stroke="#f59e0b" stroke-width="1.5"/><line x1="292" y1="38" x2="348" y2="38" stroke="#f59e0b" stroke-width="1.5"/><line x1="300" y1="18" x2="340" y2="58" stroke="#f59e0b" stroke-width="1.5"/><line x1="340" y1="18" x2="300" y2="58" stroke="#f59e0b" stroke-width="1.5"/><rect x="315" y="7" width="10" height="7" rx="2" fill="#ef4444"/><rect x="343" y="15" width="10" height="7" rx="2" fill="#3b82f6"/><rect x="315" y="60" width="10" height="7" rx="2" fill="#f59e0b"/><line x1="300" y1="66" x2="290" y2="76" stroke="#f59e0b" stroke-width="2"/><line x1="340" y1="66" x2="350" y2="76" stroke="#f59e0b" stroke-width="2"/><polygon points="60,65 80,35 100,65" fill="#ef4444"/><polygon points="65,65 80,40 95,65" fill="white" opacity="0.3"/><line x1="80" y1="35" x2="80" y2="75" stroke="#92400e" stroke-width="2"/><polygon points="110,65 135,30 160,65" fill="#3b82f6"/><line x1="135" y1="30" x2="135" y2="75" stroke="#92400e" stroke-width="2"/><path d="M0 25 Q50 18 100 25 Q150 32 200 25 Q250 18 300 25" fill="none" stroke="#fde68a" stroke-width="1" stroke-dasharray="3,4"/><circle cx="25" cy="21" r="2.5" fill="#ef4444"/><circle cx="50" cy="18" r="2.5" fill="#22c55e"/><circle cx="75" cy="21" r="2.5" fill="#3b82f6"/><circle cx="100" cy="25" r="2.5" fill="#fde68a"/><circle cx="150" cy="18" r="2.5" fill="#a855f7"/><circle cx="200" cy="25" r="2.5" fill="#fde68a"/><circle cx="250" cy="18" r="2.5" fill="#3b82f6"/><rect x="0" y="70" width="400" height="10" fill="#312e81"/><line x1="195" y1="50" x2="195" y2="72" stroke="#d1d5db" stroke-width="2"/><ellipse cx="195" cy="45" rx="14" ry="10" fill="#f9a8d4" opacity="0.9"/>` },
+};
+
+const DEFAUT_APPARENCE = { couleur: '#f0fdf4', motif: 'grille', couleurMotif: '#bbf7d0', scene: 'plage' };
+const APPARENCE_VERSION = 'v3';
 let apparence = localStorage.getItem('mc_apparence_v') === APPARENCE_VERSION
   ? charger('mc_apparence', DEFAUT_APPARENCE)
   : DEFAUT_APPARENCE;
@@ -1015,6 +1025,7 @@ function appliquerApparence() {
   document.body.style.backgroundColor = apparence.couleur;
   document.body.style.backgroundImage = motifs[apparence.motif] || 'none';
   document.body.style.backgroundSize = sizes[apparence.motif] || '';
+  const tb = document.querySelector('.tabbar'); if (tb) tb.style.backgroundColor = apparence.couleur;
 }
 
 function charger(cle, defaut) {
@@ -1074,6 +1085,29 @@ function render() {
   renderEnseignes();
 }
 
+function renderHeader() {
+  const hdr = document.getElementById('header-courses');
+  if (!hdr) return;
+  const jours = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const d = new Date();
+  const nbArts = articles.length;
+  const nbMags = enseignes.filter(e => articles.some(a => a.enseigneId === e.id)).length;
+  const sceneData = SCENES[apparence.scene || 'plage'] || SCENES.plage;
+  hdr.innerHTML = `
+    <div style="position:relative;width:100%;max-width:500px;margin:0 auto 6px;filter:drop-shadow(0 0 12px rgba(186,230,253,0.8))">
+      <svg viewBox="0 0 400 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:70px;display:block;border-radius:40px;mask-image:radial-gradient(ellipse 75% 65% at 50% 50%, black 20%, transparent 80%);-webkit-mask-image:radial-gradient(ellipse 75% 65% at 50% 50%, black 20%, transparent 80%)">
+        <defs><radialGradient id="fade" cx="50%" cy="50%" rx="50%" ry="50%"><stop offset="60%" stop-color="white" stop-opacity="1"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient></defs>
+        ${sceneData.svg}
+        <ellipse cx="200" cy="40" rx="200" ry="42" fill="url(#fade)" opacity="0.5"/>
+      </svg>
+    </div>
+    <div style="font-size:0.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#555;background:rgba(255,255,255,0.6);display:inline-block;padding:2px 12px;border-radius:20px;margin-bottom:4px">${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]} ${d.getFullYear()}</div><br>
+    <div style="display:inline-flex;gap:12px;background:rgba(255,255,255,0.7);border-radius:20px;padding:5px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);font-size:0.78rem;font-weight:800;color:#555;margin-bottom:6px">
+      <div><b style="color:#16a34a">${nbArts}</b> article${nbArts>1?'s':''}</div><div>•</div><div><b style="color:#16a34a">${nbMags}</b> magasin${nbMags>1?'s':''}</div>
+    </div>`;
+}
+
 function renderCourses() {
   const grille = document.getElementById('grille');
   if (!grille) return;
@@ -1089,6 +1123,7 @@ function renderCourses() {
     if (e && nb > 0) grille.appendChild(creerCarteMagasin(e, idx));
   });
   initDrag();
+  renderHeader();
 }
 
 function renderListe() {
@@ -1154,13 +1189,22 @@ function renderEnseignes() {
   construireApparence();
 }
 
+function changerScene(key) {
+  apparence.scene = key;
+  try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
+  renderHeader();
+  document.querySelectorAll('[data-scene]').forEach(el => {
+    el.style.border = el.dataset.scene === key ? '3px solid #333' : '2px solid #eee';
+  });
+}
+
 function changerCouleurFond(couleur) {
   apparence.couleur = couleur;
   try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
   appliquerApparence();
-  // Mettre à jour bordures
-  document.querySelectorAll('#section-apparence [data-fond]').forEach(el => {
-    el.style.border = el.dataset.fond === couleur ? '2px solid #333' : '2px solid #ddd';
+  renderHeader();
+  document.querySelectorAll('[data-fond]').forEach(el => {
+    el.style.border = el.dataset.fond === couleur ? '3px solid #333' : '2px solid #ddd';
   });
 }
 
@@ -1168,8 +1212,9 @@ function changerCouleurMotif(couleur) {
   apparence.couleurMotif = couleur;
   try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
   appliquerApparence();
-  document.querySelectorAll('#palette-motif [data-cm]').forEach(el => {
-    el.style.border = el.dataset.cm === couleur ? '2px solid #333' : '2px solid #ddd';
+  renderHeader();
+  document.querySelectorAll('[data-cm]').forEach(el => {
+    el.style.border = el.dataset.cm === couleur ? '3px solid #333' : '2px solid #ddd';
   });
 }
 
@@ -1177,11 +1222,12 @@ function changerMotif(motif) {
   apparence.motif = motif;
   try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
   appliquerApparence();
+  renderHeader();
   const pm = document.getElementById('palette-motif');
   if (pm) pm.style.display = motif === 'aucun' ? 'none' : 'block';
   // Mettre à jour la bordure du motif sélectionné
-  document.querySelectorAll('#section-apparence [data-motif]').forEach(el => {
-    el.style.border = el.dataset.motif === motif ? '2px solid #333' : '2px solid #eee';
+  document.querySelectorAll('[data-motif]').forEach(el => {
+    el.style.border = el.dataset.motif === motif ? '3px solid #333' : '2px solid #eee';
   });
 }
 
@@ -2065,6 +2111,32 @@ function construireApparence() {
   wrap.style.cssText = 'background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07)';
 
   // Couleur de fond
+  // Scènes
+  const lblScene = document.createElement('label');
+  lblScene.style.cssText = 'font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px';
+  lblScene.textContent = 'Illustration';
+  wrap.appendChild(lblScene);
+
+  const grilleScene = document.createElement('div');
+  grilleScene.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px';
+  Object.entries(SCENES).forEach(([key, sc]) => {
+    const d = document.createElement('div');
+    d.dataset.scene = key;
+    d.style.cssText = `height:50px;border-radius:10px;overflow:hidden;border:${(apparence.scene||'plage')===key?'3px solid #333':'2px solid #eee'};cursor:pointer;position:relative`;
+    const svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svgEl.setAttribute('viewBox','0 0 400 80');
+    svgEl.style.cssText = 'width:100%;height:100%';
+    svgEl.innerHTML = sc.svg;
+    d.appendChild(svgEl);
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:0.6rem;font-weight:800;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.8)';
+    lbl.textContent = sc.label;
+    d.appendChild(lbl);
+    d.addEventListener('click', () => changerScene(key));
+    grilleScene.appendChild(d);
+  });
+  wrap.appendChild(grilleScene);
+
   const lbl1 = document.createElement('label');
   lbl1.style.cssText = 'font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px';
   lbl1.textContent = 'Couleur de fond';
@@ -2074,6 +2146,7 @@ function construireApparence() {
   palFond.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px';
   ['#ffffff','#fafafa','#fffde7','#fff9c4','#f0fdf4','#e8f5e9','#eff6ff','#e3f2fd','#fdf4ff','#fce4ec','#fff3e0','#fbe9e7'].forEach(c => {
     const d = document.createElement('div');
+    d.dataset.fond = c;
     d.style.cssText = `width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${apparence.couleur===c?'#333':'#ddd'};cursor:pointer`;
     d.addEventListener('click', () => changerCouleurFond(c));
     palFond.appendChild(d);
@@ -2096,6 +2169,7 @@ function construireApparence() {
   grille.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px';
   [['aucun','Aucun',''],['points','Points','radial-gradient(#ccc 1px,transparent 1px)'],['grille','Grille','linear-gradient(#ddd 1px,transparent 1px),linear-gradient(90deg,#ddd 1px,transparent 1px)'],['diagonales','Diagonales','repeating-linear-gradient(45deg,#ddd 0,#ddd 1px,transparent 0,transparent 50%)'],['vague1','Vague 1',''],['vague2','Vague 2',''],['vague3','Vague 3',''],['vague4','Vague 4',''],['losanges','Losanges','linear-gradient(135deg,#ddd 25%,transparent 25%),linear-gradient(225deg,#ddd 25%,transparent 25%),linear-gradient(315deg,#ddd 25%,transparent 25%),linear-gradient(45deg,#ddd 25%,transparent 25%)'],['vichy','Vichy','']].forEach(([id,nom,bg]) => {
     const d = document.createElement('div');
+    d.dataset.motif = id;
     d.style.cssText = `height:50px;border-radius:10px;background-color:#f5f5f5;background-image:${bg};background-size:16px 16px;border:2px solid ${apparence.motif===id?'#333':'#eee'};cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px`;
     const span = document.createElement('span');
     span.style.cssText = 'font-size:0.65rem;font-weight:800;color:#555;background:rgba(255,255,255,0.8);padding:1px 4px;border-radius:4px';
@@ -2120,6 +2194,7 @@ function construireApparence() {
   palMotif.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
   ['#e2e8f0','#fff9c4','#fffde7','#bbf7d0','#a7f3d0','#bae6fd','#93c5fd','#fde68a','#fecaca','#e9d5ff','#fed7aa','#fce7f3'].forEach(c => {
     const d = document.createElement('div');
+    d.dataset.cm = c;
     d.style.cssText = `width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${apparence.couleurMotif===c?'#333':'#ddd'};cursor:pointer`;
     d.addEventListener('click', () => changerCouleurMotif(c));
     palMotif.appendChild(d);
