@@ -1009,8 +1009,9 @@ function appliquerApparence() {
     'vague3': `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='40'><path d='M0 10 C25 2 75 18 100 10' fill='none' stroke='${encodeURIComponent(cm)}' stroke-width='1'/><path d='M0 25 C25 17 75 33 100 25' fill='none' stroke='${encodeURIComponent(cm)}' stroke-width='1'/></svg>")`,
     'vague4': `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='40'><path d='M0 20 C50 5 100 35 150 20 C175 12 190 8 200 20' fill='none' stroke='${encodeURIComponent(cm)}' stroke-width='1.5'/></svg>")`,
     'losanges': `linear-gradient(135deg,${cm} 25%,transparent 25%),linear-gradient(225deg,${cm} 25%,transparent 25%),linear-gradient(315deg,${cm} 25%,transparent 25%),linear-gradient(45deg,${cm} 25%,transparent 25%)`,
+    'vichy': `url("data:image/svg+xml;base64,${btoa(`<svg xmlns='http://www.w3.org/2000/svg' width='70' height='70'><rect width='70' height='70' fill='${apparence.couleur}'/><rect x='0' y='0' width='35' height='70' fill='${cm}' opacity='0.4'/><rect x='0' y='0' width='70' height='35' fill='${cm}' opacity='0.4'/></svg>`)}")`,
   };
-  const sizes = { 'points':'20px 20px','grille':'24px 24px','diagonales':'16px 16px','losanges':'16px 16px','vague1':'100px 20px','vague2':'120px 30px','vague3':'100px 40px','vague4':'200px 40px' };
+  const sizes = { 'points':'20px 20px','grille':'24px 24px','diagonales':'16px 16px','losanges':'16px 16px','vague1':'100px 20px','vague2':'120px 30px','vague3':'100px 40px','vague4':'200px 40px','vichy':'70px 70px' };
   document.body.style.backgroundColor = apparence.couleur;
   document.body.style.backgroundImage = motifs[apparence.motif] || 'none';
   document.body.style.backgroundSize = sizes[apparence.motif] || '';
@@ -1117,32 +1118,7 @@ function renderEnseignes() {
     <div onclick="toggleSection(this,'apparence')" style="text-align:center;padding:14px 16px;background:linear-gradient(135deg,#fefce8,#fef08a);border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.08);cursor:pointer;margin-bottom:8px;border:1px solid #fef08a">
       <span style="font-weight:800;font-size:1rem;color:#854d0e;letter-spacing:1px">🎨 Couleur de l'app</span>
     </div>
-    <div id="section-apparence" style="display:none;padding:0 4px;margin-bottom:16px">
-      <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07)">
-        <label style="font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px">Couleur de fond</label>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
-          ${['#ffffff','#f8fafc','#fef9ef','#f0fdf4','#eff6ff','#fdf4ff','#fff1f2','#f5f5f4'].map(c =>
-            `<div onclick="changerCouleurFond('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${apparence.couleur===c?'#333':'#ddd'};cursor:pointer"></div>`
-          ).join('')}
-          <input type="color" value="${apparence.couleur}" oninput="changerCouleurFond(this.value)" style="width:32px;height:32px;border-radius:50%;border:2px solid #ddd;cursor:pointer;padding:0">
-        </div>
-        <label style="font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px">Motif</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          ${[['aucun','Aucun',''],['points','Points','radial-gradient(#ccc 1px,transparent 1px)'],['grille','Grille','linear-gradient(#ddd 1px,transparent 1px),linear-gradient(90deg,#ddd 1px,transparent 1px)'],['diagonales','Diagonales','repeating-linear-gradient(45deg,#ddd 0,#ddd 1px,transparent 0,transparent 50%)'],['vague1','Vague 1',''],['vague2','Vague 2',''],['vague3','Vague 3',''],['vague4','Vague 4',''],['losanges','Losanges','linear-gradient(135deg,#ddd 25%,transparent 25%),linear-gradient(225deg,#ddd 25%,transparent 25%),linear-gradient(315deg,#ddd 25%,transparent 25%),linear-gradient(45deg,#ddd 25%,transparent 25%)']].map(([id,nom,bg]) =>
-            `<div onclick="changerMotif('${id}')" style="height:50px;border-radius:10px;background-color:#f5f5f5;background-image:${bg};background-size:16px 16px;border:2px solid ${apparence.motif===id?'#333':'#eee'};cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px"><span style="font-size:0.65rem;font-weight:800;color:#555;background:rgba(255,255,255,0.8);padding:1px 4px;border-radius:4px">${nom}</span></div>`
-          ).join('')}
-        </div>
-        <div id="palette-motif" style="display:${apparence.motif==='aucun' ? 'none' : 'block'}">
-          <label style="font-size:0.85rem;font-weight:800;color:#555;display:block;margin:12px 0 8px">Couleur du motif</label>
-          <div style="display:flex;flex-wrap:wrap;gap:6px">
-            ${['#e2e8f0','#bbf7d0','#bae6fd','#fde68a','#fecaca','#e9d5ff','#fed7aa','#f1f5f9'].map(c =>
-              `<div onclick="changerCouleurMotif('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${apparence.couleurMotif===c?'#333':'#ddd'};cursor:pointer"></div>`
-            ).join('')}
-            <input type="color" value="${apparence.couleurMotif||'#e2e8f0'}" oninput="changerCouleurMotif(this.value)" style="width:32px;height:32px;border-radius:50%;border:2px solid #ddd;cursor:pointer;padding:0">
-          </div>
-        </div>
-      </div>
-    </div>
+    <div id="section-apparence" style="display:none;padding:0 4px;margin-bottom:16px"></div>
 
     <!-- Section Gestion des magasins -->
     <div onclick="toggleSection(this,'magasins')" style="text-align:center;padding:14px 16px;background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.08);cursor:pointer;margin-bottom:8px;border:1px solid #bae6fd">
@@ -1175,29 +1151,38 @@ function renderEnseignes() {
       <p><strong>Carte de fidélité</strong> — Dans Gestion des magasins → modifier → saisir le numéro de carte.</p>
       <p style="margin-top:16px;text-align:center;color:#bbb;font-size:0.78rem">© 04-2026 — Tous droits réservés — F. Lepreux</p>
     </div>`;
+  construireApparence();
 }
 
 function changerCouleurFond(couleur) {
   apparence.couleur = couleur;
   try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
   appliquerApparence();
-  renderEnseignes();
+  // Mettre à jour bordures
+  document.querySelectorAll('#section-apparence [data-fond]').forEach(el => {
+    el.style.border = el.dataset.fond === couleur ? '2px solid #333' : '2px solid #ddd';
+  });
 }
 
 function changerCouleurMotif(couleur) {
   apparence.couleurMotif = couleur;
   try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
   appliquerApparence();
-  renderEnseignes();
+  document.querySelectorAll('#palette-motif [data-cm]').forEach(el => {
+    el.style.border = el.dataset.cm === couleur ? '2px solid #333' : '2px solid #ddd';
+  });
 }
 
 function changerMotif(motif) {
   apparence.motif = motif;
   try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
   appliquerApparence();
-  renderEnseignes();
   const pm = document.getElementById('palette-motif');
   if (pm) pm.style.display = motif === 'aucun' ? 'none' : 'block';
+  // Mettre à jour la bordure du motif sélectionné
+  document.querySelectorAll('#section-apparence [data-motif]').forEach(el => {
+    el.style.border = el.dataset.motif === motif ? '2px solid #333' : '2px solid #eee';
+  });
 }
 
 function toggleSection(header, section) {
@@ -1207,6 +1192,7 @@ function toggleSection(header, section) {
   content.style.display = isOpen ? 'none' : 'block';
   vue.dataset[section + 'Ouverts'] = !isOpen;
   if (section === 'aide') vue.dataset.aideOuverte = !isOpen;
+  if (!isOpen && section === "apparence") construireApparence();
 }
 
 let ongletActif = 'courses';
@@ -2068,6 +2054,99 @@ function artDragEnd(e) {
 
 
 
+
+
+
+function construireApparence() {
+  const sec = document.getElementById('section-apparence');
+  if (!sec) return;
+  sec.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07)';
+
+  // Couleur de fond
+  const lbl1 = document.createElement('label');
+  lbl1.style.cssText = 'font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px';
+  lbl1.textContent = 'Couleur de fond';
+  wrap.appendChild(lbl1);
+
+  const palFond = document.createElement('div');
+  palFond.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px';
+  ['#ffffff','#fafafa','#fffde7','#fff9c4','#f0fdf4','#e8f5e9','#eff6ff','#e3f2fd','#fdf4ff','#fce4ec','#fff3e0','#fbe9e7'].forEach(c => {
+    const d = document.createElement('div');
+    d.style.cssText = `width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${apparence.couleur===c?'#333':'#ddd'};cursor:pointer`;
+    d.addEventListener('click', () => changerCouleurFond(c));
+    palFond.appendChild(d);
+  });
+  const inpFond = document.createElement('input');
+  inpFond.type = 'color';
+  inpFond.value = apparence.couleur;
+  inpFond.style.cssText = 'width:32px;height:32px;border-radius:50%;border:2px solid #ddd;cursor:pointer;padding:0';
+  inpFond.addEventListener('input', () => changerCouleurFond(inpFond.value));
+  palFond.appendChild(inpFond);
+  wrap.appendChild(palFond);
+
+  // Motif
+  const lbl2 = document.createElement('label');
+  lbl2.style.cssText = 'font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px';
+  lbl2.textContent = 'Motif';
+  wrap.appendChild(lbl2);
+
+  const grille = document.createElement('div');
+  grille.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px';
+  [['aucun','Aucun',''],['points','Points','radial-gradient(#ccc 1px,transparent 1px)'],['grille','Grille','linear-gradient(#ddd 1px,transparent 1px),linear-gradient(90deg,#ddd 1px,transparent 1px)'],['diagonales','Diagonales','repeating-linear-gradient(45deg,#ddd 0,#ddd 1px,transparent 0,transparent 50%)'],['vague1','Vague 1',''],['vague2','Vague 2',''],['vague3','Vague 3',''],['vague4','Vague 4',''],['losanges','Losanges','linear-gradient(135deg,#ddd 25%,transparent 25%),linear-gradient(225deg,#ddd 25%,transparent 25%),linear-gradient(315deg,#ddd 25%,transparent 25%),linear-gradient(45deg,#ddd 25%,transparent 25%)'],['vichy','Vichy','']].forEach(([id,nom,bg]) => {
+    const d = document.createElement('div');
+    d.style.cssText = `height:50px;border-radius:10px;background-color:#f5f5f5;background-image:${bg};background-size:16px 16px;border:2px solid ${apparence.motif===id?'#333':'#eee'};cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px`;
+    const span = document.createElement('span');
+    span.style.cssText = 'font-size:0.65rem;font-weight:800;color:#555;background:rgba(255,255,255,0.8);padding:1px 4px;border-radius:4px';
+    span.textContent = nom;
+    d.appendChild(span);
+    d.addEventListener('click', () => changerMotif(id));
+    grille.appendChild(d);
+  });
+  wrap.appendChild(grille);
+
+  // Couleur du motif
+  const palMotifWrap = document.createElement('div');
+  palMotifWrap.id = 'palette-motif';
+  palMotifWrap.style.display = apparence.motif === 'aucun' ? 'none' : 'block';
+
+  const lbl3 = document.createElement('label');
+  lbl3.style.cssText = 'font-size:0.85rem;font-weight:800;color:#555;display:block;margin:12px 0 8px';
+  lbl3.textContent = 'Couleur du motif';
+  palMotifWrap.appendChild(lbl3);
+
+  const palMotif = document.createElement('div');
+  palMotif.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+  ['#e2e8f0','#fff9c4','#fffde7','#bbf7d0','#a7f3d0','#bae6fd','#93c5fd','#fde68a','#fecaca','#e9d5ff','#fed7aa','#fce7f3'].forEach(c => {
+    const d = document.createElement('div');
+    d.style.cssText = `width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${apparence.couleurMotif===c?'#333':'#ddd'};cursor:pointer`;
+    d.addEventListener('click', () => changerCouleurMotif(c));
+    palMotif.appendChild(d);
+  });
+  const inpMotif = document.createElement('input');
+  inpMotif.type = 'color';
+  inpMotif.value = apparence.couleurMotif || '#e2e8f0';
+  inpMotif.style.cssText = 'width:32px;height:32px;border-radius:50%;border:2px solid #ddd;cursor:pointer;padding:0';
+  inpMotif.addEventListener('input', () => changerCouleurMotif(inpMotif.value));
+  palMotif.appendChild(inpMotif);
+  palMotifWrap.appendChild(palMotif);
+  wrap.appendChild(palMotifWrap);
+
+  sec.appendChild(wrap);
+}
+
+function bindApparenceListeners() {
+  document.querySelectorAll('[data-fond]').forEach(el => {
+    el.addEventListener('click', () => changerCouleurFond(el.dataset.fond));
+  });
+  document.querySelectorAll('[data-motif]').forEach(el => {
+    el.addEventListener('click', () => changerMotif(el.dataset.motif));
+  });
+  document.querySelectorAll('[data-cm]').forEach(el => {
+    el.addEventListener('click', () => changerCouleurMotif(el.dataset.cm));
+  });
+}
 
 // ===================== SWIPE HORIZONTAL ENTRE ONGLETS =====================
 const TABS_ORDER = ['courses', 'liste', 'enseignes'];
