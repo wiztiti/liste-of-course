@@ -2327,21 +2327,115 @@ history.replaceState({ ouvert: false }, '');
 
 // ===================== CARTE FIDÉLITÉ =====================
 
+// Variables recadrage
+let cropImgSrc = null;
+let cropScale = 1, cropX = 0, cropY = 0;
+let cropLastDist = 0, cropStartX = 0, cropStartY = 0;
+let cropImgNatW = 0, cropImgNatH = 0;
+
 function chargerPhotoCarte(input) {
   const file = input.files && input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    editCarteFidelite = ev.target.result; // stocke la photo en base64
-    const apercu = document.getElementById('apercu-carte-fidelite');
-    if (apercu) {
-      apercu.innerHTML = `<div style="position:relative;display:inline-block">
-        <img src="${ev.target.result}" style="max-width:100%;border-radius:10px;border:1px solid #eee">
-        <button onclick="supprimerPhotoCarte()" style="position:absolute;top:6px;right:6px;background:#e74c3c;color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:0.8rem">✕</button>
-      </div>`;
-    }
+    cropImgSrc = ev.target.result;
+    ouvrirCrop(cropImgSrc);
   };
   reader.readAsDataURL(file);
+}
+
+function ouvrirCrop(src) {
+  const modal = document.getElementById('modal-crop');
+  const img = document.getElementById('crop-img');
+  const container = document.getElementById('crop-container');
+  modal.style.display = 'flex';
+
+  img.onload = () => {
+    cropImgNatW = img.naturalWidth;
+    cropImgNatH = img.naturalHeight;
+    const cW = container.offsetWidth;
+    const cH = container.offsetHeight;
+    // Fit image in container
+    cropScale = Math.min(cW / cropImgNatW, cH / cropImgNatH);
+    cropX = (cW - cropImgNatW * cropScale) / 2;
+    cropY = (cH - cropImgNatH * cropScale) / 2;
+    appliquerCrop();
+    // Cadre centré 80% largeur
+    const frame = document.getElementById('crop-frame');
+    const fw = cW * 0.85; const fh = cH * 0.5;
+    frame.style.left = ((cW - fw) / 2) + 'px';
+    frame.style.top = ((cH - fh) / 2) + 'px';
+    frame.style.width = fw + 'px';
+    frame.style.height = fh + 'px';
+  };
+  img.src = src;
+
+  // Touch events
+  container.ontouchstart = e => {
+    if (e.touches.length === 2) {
+      cropLastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    } else {
+      cropStartX = e.touches[0].clientX - cropX;
+      cropStartY = e.touches[0].clientY - cropY;
+    }
+  };
+  container.ontouchmove = e => {
+    e.preventDefault();
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      cropScale = Math.max(0.3, cropScale * (dist / cropLastDist));
+      cropLastDist = dist;
+    } else {
+      cropX = e.touches[0].clientX - cropStartX;
+      cropY = e.touches[0].clientY - cropStartY;
+    }
+    appliquerCrop();
+  };
+}
+
+function appliquerCrop() {
+  const img = document.getElementById('crop-img');
+  img.style.width = (cropImgNatW * cropScale) + 'px';
+  img.style.height = (cropImgNatH * cropScale) + 'px';
+  img.style.left = cropX + 'px';
+  img.style.top = cropY + 'px';
+}
+
+function validerCrop() {
+  const img = document.getElementById('crop-img');
+  const frame = document.getElementById('crop-frame');
+  const container = document.getElementById('crop-container');
+  // Calculer la zone rognée
+  const fl = parseFloat(frame.style.left);
+  const ft = parseFloat(frame.style.top);
+  const fw = parseFloat(frame.style.width);
+  const fh = parseFloat(frame.style.height);
+  // Coordonnées dans l'image originale
+  const sx = (fl - cropX) / cropScale;
+  const sy = (ft - cropY) / cropScale;
+  const sw = fw / cropScale;
+  const sh = fh / cropScale;
+  // Canvas pour rogner
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(sw); canvas.height = Math.round(sh);
+  const ctx = canvas.getContext('2d');
+  const tmpImg = new Image();
+  tmpImg.onload = () => {
+    ctx.drawImage(tmpImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    editCarteFidelite = canvas.toDataURL('image/jpeg', 0.92);
+    const apercu = document.getElementById('apercu-carte-fidelite');
+    if (apercu) {
+      apercu.innerHTML = `<div style="position:relative;display:inline-block"><img src="${editCarteFidelite}" style="max-width:100%;border-radius:10px;border:1px solid #eee"><button onclick="supprimerPhotoCarte()" style="position:absolute;top:6px;right:6px;background:#e74c3c;color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:0.8rem">✕</button></div>`;
+    }
+    document.getElementById('modal-crop').style.display = 'none';
+  };
+  tmpImg.src = cropImgSrc;
+}
+
+function annulerCrop() {
+  document.getElementById('modal-crop').style.display = 'none';
+  const input = document.getElementById('input-carte-photo');
+  if (input) input.value = '';
 }
 
 function supprimerPhotoCarte() {
@@ -2906,5 +3000,20 @@ document.addEventListener('touchmove', function(e) {
 
 render();
 </script>
+
+<!-- MODAL RECADRAGE PHOTO -->
+<div id="modal-crop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+  <div style="color:white;font-weight:800;font-size:0.9rem;letter-spacing:1px">CADRER LA CARTE</div>
+  <div style="position:relative;width:90vw;height:55vh;overflow:hidden;border-radius:8px;background:#111" id="crop-container">
+    <img id="crop-img" style="position:absolute;transform-origin:top left" draggable="false">
+    <div id="crop-frame" style="position:absolute;border:3px solid #38bdf8;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);pointer-events:none;border-radius:4px"></div>
+  </div>
+  <div style="color:#aaa;font-size:0.75rem">Pincez pour zoomer • Glissez pour repositionner</div>
+  <div style="display:flex;gap:12px">
+    <button onclick="annulerCrop()" style="padding:12px 24px;background:#444;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer">Annuler</button>
+    <button onclick="validerCrop()" style="padding:12px 24px;background:#38bdf8;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer">✓ Utiliser</button>
+  </div>
+</div>
+
 </body>
 </html>
