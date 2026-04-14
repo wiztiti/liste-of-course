@@ -681,6 +681,7 @@
     background: none;
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -1260,7 +1261,7 @@ function switchTab(tab) {
   }
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
-    if (p) p.style.display = t === tab ? 'flex' : 'none';
+    if (p) p.style.display = t === tab ? (t === 'magasin' ? 'block' : 'flex') : 'none';
     const tb = document.getElementById('tab-' + t);
     // Page magasin = sous-page de courses, garder courses actif
     const tabActif = tab === 'magasin' ? 'courses' : tab;
@@ -2344,6 +2345,8 @@ function ouvrirFidelite() {
 
 function fermerFidelite() {
   document.getElementById('modal-fidelite').style.display = 'none';
+  const qrDiv = document.getElementById('fidelite-qr-div');
+  if (qrDiv) qrDiv.innerHTML = '';
 }
 
 
@@ -2522,30 +2525,30 @@ const QR = (() => {
 })();
 
 function dessinerQR(canvas, text) {
-  let mat;
-  try { mat = QR.encode(text); }
-  catch(e) {
-    const ctx = canvas.getContext('2d');
-    canvas.width = canvas.height = 200;
-    ctx.fillStyle='#fff'; ctx.fillRect(0,0,200,200);
-    ctx.fillStyle='#c00'; ctx.font='13px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('Texte trop long', 100, 100);
-    return;
+  // Utiliser qrcode.js pour générer un vrai QR code
+  canvas.style.display = 'none';
+  const div = document.getElementById('fidelite-qr-div') || (() => {
+    const d = document.createElement('div');
+    d.id = 'fidelite-qr-div';
+    canvas.parentNode.insertBefore(d, canvas);
+    return d;
+  })();
+  div.innerHTML = '';
+  div.style.cssText = 'background:white;padding:16px;border-radius:12px';
+  try {
+    new QRCode(div, {
+      text: text,
+      width: Math.min(window.innerWidth * 0.7, 280),
+      height: Math.min(window.innerWidth * 0.7, 280),
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {
+    div.textContent = 'Erreur QR : ' + e.message;
   }
-  const s = mat.length;
-  const cell = Math.floor(Math.min(window.innerWidth * 0.75, 300) / (s + 8));
-  const quiet = cell * 4;
-  canvas.width = canvas.height = s * cell + quiet * 2;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle = '#000';
-  for (let r = 0; r < s; r++)
-    for (let c = 0; c < s; c++)
-      if (mat[r][c]) ctx.fillRect(quiet + c*cell, quiet + r*cell, cell, cell);
 }
 
-
-// ---- Code-barres Code128 ----
 function dessinerBarcode(canvas, text) {
   const encoded = encodeCode128(text);
   const barW = 2;
