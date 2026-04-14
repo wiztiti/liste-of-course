@@ -1093,6 +1093,7 @@ function renderHeader() {
     const hdr = document.getElementById(id);
     if (!hdr) return;
     const fadeId = 'fade-' + idx;
+    const showInfo = id === 'header-courses';
   const jours = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   const d = new Date();
@@ -1107,10 +1108,10 @@ function renderHeader() {
         <ellipse cx="200" cy="40" rx="200" ry="42" fill="url(#${fadeId})" opacity="0.5"/>
       </svg>
     </div>
-    <div style="font-size:0.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#555;background:rgba(255,255,255,0.6);display:inline-block;padding:2px 12px;border-radius:20px;margin-bottom:4px">${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]} ${d.getFullYear()}</div><br>
+    ${showInfo ? `<div style="font-size:0.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#555;background:rgba(255,255,255,0.6);display:inline-block;padding:2px 12px;border-radius:20px;margin-bottom:4px">${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]} ${d.getFullYear()}</div><br>
     <div style="display:inline-flex;gap:12px;background:rgba(255,255,255,0.7);border-radius:20px;padding:5px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);font-size:0.78rem;font-weight:800;color:#555;margin-bottom:6px">
       <div><b style="color:#16a34a">${nbArts}</b> article${nbArts>1?'s':''}</div><div>•</div><div><b style="color:#16a34a">${nbMags}</b> magasin${nbMags>1?'s':''}</div>
-    </div>`;
+    </div>` : ''}`;
   });
 }
 
