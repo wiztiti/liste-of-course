@@ -2542,7 +2542,7 @@ function dessinerQR(canvas, text) {
       height: Math.min(window.innerWidth * 0.7, 280),
       colorDark: '#000000',
       colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
+      correctLevel: QRCode.CorrectLevel.L
     });
   } catch(e) {
     div.textContent = 'Erreur QR : ' + e.message;
