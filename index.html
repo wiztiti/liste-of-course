@@ -681,7 +681,7 @@
     background: none;
   }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 <body>
 
@@ -915,16 +915,12 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label">Carte de fidélité</label>
-      <input class="form-input" type="text" id="edit-carte-fidelite" placeholder="Numéro de carte…" inputmode="text">
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#555;cursor:pointer">
-          <input type="radio" name="edit-carte-type" value="barcode" checked> Code-barres
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#555;cursor:pointer">
-          <input type="radio" name="edit-carte-type" value="qrcode"> QR Code
-        </label>
-      </div>
+      <label class="form-label">Carte de fidélité (photo)</label>
+      <div id="apercu-carte-fidelite" style="margin-bottom:8px"></div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:2px dashed #ddd;border-radius:12px;cursor:pointer;font-weight:800;color:#888;font-size:0.9rem">
+        📷 Prendre / Choisir une photo
+        <input type="file" accept="image/*" capture="environment" id="input-carte-photo" style="display:none" onchange="chargerPhotoCarte(this)">
+      </label>
     </div>
 
     <div class="sep"></div>
@@ -934,10 +930,11 @@
 </div>
 
 <!-- MODAL CARTE FIDELITE -->
-<div id="modal-fidelite" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:20px" onclick="fermerFidelite()">
+<div id="modal-fidelite" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px" onclick="fermerFidelite()">
   <div id="fidelite-nom" style="font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#333"></div>
-  <canvas id="fidelite-canvas" style="max-width:90vw"></canvas>
-  <div style="font-size:0.8rem;color:#ccc;margin-top:10px">Toucher pour fermer</div>
+  <canvas id="fidelite-canvas" style="max-width:90vw;display:none"></canvas>
+  <img id="fidelite-photo" style="max-width:95vw;max-height:70vh;border-radius:12px;object-fit:contain;display:none" alt="Carte fidélité">
+  <div style="font-size:0.8rem;color:#ccc">Toucher pour fermer</div>
 </div>
 
 <script>
@@ -1672,6 +1669,13 @@ function editEnseigne(id) {
     editLogoData = e.logoData || null;
     editAfficherNom = e.afficherNom || false;
     editCarteFidelite = e.carteFidelite || '';
+    // Afficher aperçu photo si existante
+    setTimeout(() => {
+      const apercu = document.getElementById('apercu-carte-fidelite');
+      if (apercu && editCarteFidelite) {
+        apercu.innerHTML = `<div style="position:relative;display:inline-block"><img src="${editCarteFidelite}" style="max-width:100%;border-radius:10px;border:1px solid #eee"><button onclick="supprimerPhotoCarte()" style="position:absolute;top:6px;right:6px;background:#e74c3c;color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:0.8rem">✕</button></div>`;
+      }
+    }, 60);
     editCarteType = e.carteType || 'barcode';
   } else {
     document.getElementById('modal-edit-titre').textContent = 'Nouvelle enseigne';
@@ -1954,8 +1958,8 @@ function validerEnseigneEdit() {
   if (!nom) { alert('Merci de saisir un nom.'); return; }
   const fontSize = editFontSize;
 
-  const carteFidelite = document.getElementById('edit-carte-fidelite').value.trim();
-  const carteType = document.querySelector('input[name="edit-carte-type"]:checked')?.value || 'barcode';
+  const carteFidelite = editCarteFidelite || '';
+  const carteType = 'photo';
 
   if (editEnseigneId) {
     const idx = enseignes.findIndex(e => e.id === editEnseigneId);
@@ -2322,24 +2326,50 @@ history.replaceState({ ouvert: false }, '');
 
 
 // ===================== CARTE FIDÉLITÉ =====================
+
+function chargerPhotoCarte(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    editCarteFidelite = ev.target.result; // stocke la photo en base64
+    const apercu = document.getElementById('apercu-carte-fidelite');
+    if (apercu) {
+      apercu.innerHTML = `<div style="position:relative;display:inline-block">
+        <img src="${ev.target.result}" style="max-width:100%;border-radius:10px;border:1px solid #eee">
+        <button onclick="supprimerPhotoCarte()" style="position:absolute;top:6px;right:6px;background:#e74c3c;color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:0.8rem">✕</button>
+      </div>`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function supprimerPhotoCarte() {
+  editCarteFidelite = '';
+  const apercu = document.getElementById('apercu-carte-fidelite');
+  if (apercu) apercu.innerHTML = '';
+  const input = document.getElementById('input-carte-photo');
+  if (input) input.value = '';
+}
+
 function ouvrirFidelite() {
   const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
   const ens = enseignes.find(x => x.id === ensId);
   if (!ens || !ens.carteFidelite) return;
 
   document.getElementById('fidelite-nom').textContent = ens.nom;
+
+  const photo = document.getElementById('fidelite-photo');
   const canvas = document.getElementById('fidelite-canvas');
-  if (ens.carteType === 'qrcode') {
-    dessinerQR(canvas, ens.carteFidelite);
-  } else {
-    dessinerBarcode(canvas, ens.carteFidelite);
-  }
+
+  // Afficher la photo
+  photo.src = ens.carteFidelite;
+  photo.style.display = 'block';
+  canvas.style.display = 'none';
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
   history.pushState({ ouvert: true }, '');
-
-  // Luminosité max
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
 }
 
@@ -2525,27 +2555,23 @@ const QR = (() => {
 })();
 
 function dessinerQR(canvas, text) {
-  // Utiliser qrcode.js pour générer un vrai QR code
-  canvas.style.display = 'none';
-  const div = document.getElementById('fidelite-qr-div') || (() => {
-    const d = document.createElement('div');
-    d.id = 'fidelite-qr-div';
-    canvas.parentNode.insertBefore(d, canvas);
-    return d;
-  })();
-  div.innerHTML = '';
-  div.style.cssText = 'background:white;padding:16px;border-radius:12px';
+  // Utiliser qrious avec mode numérique pour les numéros de carte
+  canvas.style.display = 'block';
+  const div = document.getElementById('fidelite-qr-div');
+  if (div) div.innerHTML = '';
+  const size = Math.min(window.innerWidth * 0.7, 280);
   try {
-    new QRCode(div, {
-      text: text,
-      width: Math.min(window.innerWidth * 0.7, 280),
-      height: Math.min(window.innerWidth * 0.7, 280),
-      colorDark: '#000000',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.L
+    const qr = new QRious({
+      element: canvas,
+      value: text,
+      size: size,
+      level: 'L',
+      background: 'white',
+      foreground: 'black',
+      padding: 10
     });
   } catch(e) {
-    div.textContent = 'Erreur QR : ' + e.message;
+    canvas.getContext('2d').fillText('Erreur: ' + e.message, 10, 50);
   }
 }
 
