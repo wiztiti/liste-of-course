@@ -2329,9 +2329,10 @@ history.replaceState({ ouvert: false }, '');
 
 // Variables recadrage
 let cropImgSrc = null;
-let cropScale = 1, cropX = 0, cropY = 0;
-let cropLastDist = 0, cropStartX = 0, cropStartY = 0;
-let cropImgNatW = 0, cropImgNatH = 0;
+let cropRect = { x: 0, y: 0, w: 0, h: 0 }; // en px dans le container
+let activeCorner = null;
+let cornerStartX = 0, cornerStartY = 0;
+let cornerStartRect = null;
 
 function chargerPhotoCarte(input) {
   const file = input.files && input.files[0];
@@ -2347,92 +2348,142 @@ function chargerPhotoCarte(input) {
 function ouvrirCrop(src) {
   const modal = document.getElementById('modal-crop');
   const img = document.getElementById('crop-img');
-  const container = document.getElementById('crop-container');
   modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
 
   img.onload = () => {
-    cropImgNatW = img.naturalWidth;
-    cropImgNatH = img.naturalHeight;
+    const container = document.getElementById('crop-container');
     const cW = container.offsetWidth;
     const cH = container.offsetHeight;
-    // Fit image in container
-    cropScale = Math.min(cW / cropImgNatW, cH / cropImgNatH);
-    cropX = (cW - cropImgNatW * cropScale) / 2;
-    cropY = (cH - cropImgNatH * cropScale) / 2;
-    appliquerCrop();
-    // Cadre centré 80% largeur
-    const frame = document.getElementById('crop-frame');
-    const fw = cW * 0.85; const fh = cH * 0.5;
-    frame.style.left = ((cW - fw) / 2) + 'px';
-    frame.style.top = ((cH - fh) / 2) + 'px';
-    frame.style.width = fw + 'px';
-    frame.style.height = fh + 'px';
+    // Cadre initial : 85% largeur, centré verticalement, hauteur 40%
+    const fw = cW * 0.85;
+    const fh = cH * 0.42;
+    cropRect = {
+      x: (cW - fw) / 2,
+      y: (cH - fh) / 2,
+      w: fw,
+      h: fh
+    };
+    majCropFrame();
+    initCropEvents();
   };
   img.src = src;
-
-  // Touch events
-  container.ontouchstart = e => {
-    if (e.touches.length === 2) {
-      cropLastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-    } else {
-      cropStartX = e.touches[0].clientX - cropX;
-      cropStartY = e.touches[0].clientY - cropY;
-    }
-  };
-  container.ontouchmove = e => {
-    e.preventDefault();
-    if (e.touches.length === 2) {
-      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      cropScale = Math.max(0.3, cropScale * (dist / cropLastDist));
-      cropLastDist = dist;
-    } else {
-      cropX = e.touches[0].clientX - cropStartX;
-      cropY = e.touches[0].clientY - cropStartY;
-    }
-    appliquerCrop();
-  };
 }
 
-function appliquerCrop() {
-  const img = document.getElementById('crop-img');
-  img.style.width = (cropImgNatW * cropScale) + 'px';
-  img.style.height = (cropImgNatH * cropScale) + 'px';
-  img.style.left = cropX + 'px';
-  img.style.top = cropY + 'px';
+function majCropFrame() {
+  const frame = document.getElementById('crop-frame');
+  const container = document.getElementById('crop-container');
+  const cW = container.offsetWidth;
+  const cH = container.offsetHeight;
+  const {x, y, w, h} = cropRect;
+
+  frame.style.left = x + 'px';
+  frame.style.top = y + 'px';
+  frame.style.width = w + 'px';
+  frame.style.height = h + 'px';
+
+  // Overlays
+  document.getElementById('crop-overlay-t').style.height = y + 'px';
+  document.getElementById('crop-overlay-b').style.height = (cH - y - h) + 'px';
+  const ol = document.getElementById('crop-overlay-l');
+  ol.style.top = y + 'px'; ol.style.height = h + 'px';
+  ol.style.left = '0'; ol.style.width = x + 'px';
+  const or = document.getElementById('crop-overlay-r');
+  or.style.top = y + 'px'; or.style.height = h + 'px';
+  or.style.right = '0'; or.style.width = (cW - x - w) + 'px';
+}
+
+function initCropEvents() {
+  const frame = document.getElementById('crop-frame');
+  const corners = frame.querySelectorAll('[data-corner]');
+  corners.forEach(corner => {
+    corner.addEventListener('touchstart', e => {
+      e.stopPropagation(); e.preventDefault();
+      activeCorner = corner.dataset.corner;
+      cornerStartX = e.touches[0].clientX;
+      cornerStartY = e.touches[0].clientY;
+      cornerStartRect = { ...cropRect };
+    }, { passive: false });
+  });
+
+  document.addEventListener('touchmove', onCropMove, { passive: false });
+  document.addEventListener('touchend', () => { activeCorner = null; });
+}
+
+function onCropMove(e) {
+  if (!activeCorner) return;
+  e.preventDefault();
+  const dx = e.touches[0].clientX - cornerStartX;
+  const dy = e.touches[0].clientY - cornerStartY;
+  const container = document.getElementById('crop-container');
+  const cW = container.offsetWidth, cH = container.offsetHeight;
+  const minSize = 40;
+  let {x, y, w, h} = cornerStartRect;
+
+  if (activeCorner === 'tl') {
+    const nx = Math.min(x + w - minSize, x + dx);
+    const ny = Math.min(y + h - minSize, y + dy);
+    w = x + w - nx; h = y + h - ny; x = nx; y = ny;
+  } else if (activeCorner === 'tr') {
+    const nw = Math.max(minSize, w + dx);
+    const ny = Math.min(y + h - minSize, y + dy);
+    h = y + h - ny; y = ny; w = nw;
+  } else if (activeCorner === 'bl') {
+    const nx = Math.min(x + w - minSize, x + dx);
+    w = x + w - nx; x = nx;
+    h = Math.max(minSize, h + dy);
+  } else if (activeCorner === 'br') {
+    w = Math.max(minSize, w + dx);
+    h = Math.max(minSize, h + dy);
+  }
+
+  // Contraindre dans le container
+  x = Math.max(0, Math.min(x, cW - minSize));
+  y = Math.max(0, Math.min(y, cH - minSize));
+  w = Math.min(w, cW - x);
+  h = Math.min(h, cH - y);
+
+  cropRect = { x, y, w, h };
+  majCropFrame();
 }
 
 function validerCrop() {
   const img = document.getElementById('crop-img');
-  const frame = document.getElementById('crop-frame');
   const container = document.getElementById('crop-container');
-  // Calculer la zone rognée
-  const fl = parseFloat(frame.style.left);
-  const ft = parseFloat(frame.style.top);
-  const fw = parseFloat(frame.style.width);
-  const fh = parseFloat(frame.style.height);
-  // Coordonnées dans l'image originale
-  const sx = (fl - cropX) / cropScale;
-  const sy = (ft - cropY) / cropScale;
-  const sw = fw / cropScale;
-  const sh = fh / cropScale;
-  // Canvas pour rogner
+  const cW = container.offsetWidth;
+  const cH = container.offsetHeight;
+
+  // Ratio image réelle / affichée (object-fit:contain)
+  const natW = img.naturalWidth, natH = img.naturalHeight;
+  const scaleW = cW / natW, scaleH = cH / natH;
+  const scale = Math.min(scaleW, scaleH);
+  const offX = (cW - natW * scale) / 2;
+  const offY = (cH - natH * scale) / 2;
+
+  const sx = (cropRect.x - offX) / scale;
+  const sy = (cropRect.y - offY) / scale;
+  const sw = cropRect.w / scale;
+  const sh = cropRect.h / scale;
+
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(sw); canvas.height = Math.round(sh);
   const ctx = canvas.getContext('2d');
   const tmpImg = new Image();
   tmpImg.onload = () => {
-    ctx.drawImage(tmpImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-    editCarteFidelite = canvas.toDataURL('image/jpeg', 0.92);
+    ctx.drawImage(tmpImg, Math.max(0,sx), Math.max(0,sy), sw, sh, 0, 0, canvas.width, canvas.height);
+    editCarteFidelite = canvas.toDataURL('image/jpeg', 0.95);
     const apercu = document.getElementById('apercu-carte-fidelite');
     if (apercu) {
       apercu.innerHTML = `<div style="position:relative;display:inline-block"><img src="${editCarteFidelite}" style="max-width:100%;border-radius:10px;border:1px solid #eee"><button onclick="supprimerPhotoCarte()" style="position:absolute;top:6px;right:6px;background:#e74c3c;color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:0.8rem">✕</button></div>`;
     }
+    document.removeEventListener('touchmove', onCropMove);
     document.getElementById('modal-crop').style.display = 'none';
   };
   tmpImg.src = cropImgSrc;
 }
 
 function annulerCrop() {
+  document.removeEventListener('touchmove', onCropMove);
   document.getElementById('modal-crop').style.display = 'none';
   const input = document.getElementById('input-carte-photo');
   if (input) input.value = '';
@@ -3002,16 +3053,27 @@ render();
 </script>
 
 <!-- MODAL RECADRAGE PHOTO -->
-<div id="modal-crop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;flex-direction:column;align-items:center;justify-content:center;gap:12px">
-  <div style="color:white;font-weight:800;font-size:0.9rem;letter-spacing:1px">CADRER LA CARTE</div>
-  <div style="position:relative;width:90vw;height:55vh;overflow:hidden;border-radius:8px;background:#111" id="crop-container">
-    <img id="crop-img" style="position:absolute;transform-origin:top left" draggable="false">
-    <div id="crop-frame" style="position:absolute;border:3px solid #38bdf8;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);pointer-events:none;border-radius:4px"></div>
+<div id="modal-crop" style="display:none;position:fixed;inset:0;background:#000;z-index:10000;flex-direction:column">
+  <div style="color:white;font-weight:800;font-size:0.85rem;letter-spacing:1px;text-align:center;padding:10px">CADRER LA ZONE DU CODE</div>
+  <div style="position:relative;flex:1;overflow:hidden" id="crop-container">
+    <img id="crop-img" style="width:100%;height:100%;object-fit:contain;display:block" draggable="false">
+    <!-- Overlay sombre autour du cadre -->
+    <div id="crop-overlay-t" style="position:absolute;left:0;right:0;top:0;background:rgba(0,0,0,0.55);pointer-events:none"></div>
+    <div id="crop-overlay-b" style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);pointer-events:none"></div>
+    <div id="crop-overlay-l" style="position:absolute;background:rgba(0,0,0,0.55);pointer-events:none"></div>
+    <div id="crop-overlay-r" style="position:absolute;background:rgba(0,0,0,0.55);pointer-events:none"></div>
+    <!-- Cadre -->
+    <div id="crop-frame" style="position:absolute;border:2px solid #38bdf8;pointer-events:none">
+      <!-- Poignées coins -->
+      <div data-corner="tl" style="position:absolute;top:-10px;left:-10px;width:22px;height:22px;border-top:4px solid #38bdf8;border-left:4px solid #38bdf8;cursor:nw-resize;touch-action:none"></div>
+      <div data-corner="tr" style="position:absolute;top:-10px;right:-10px;width:22px;height:22px;border-top:4px solid #38bdf8;border-right:4px solid #38bdf8;cursor:ne-resize;touch-action:none"></div>
+      <div data-corner="bl" style="position:absolute;bottom:-10px;left:-10px;width:22px;height:22px;border-bottom:4px solid #38bdf8;border-left:4px solid #38bdf8;cursor:sw-resize;touch-action:none"></div>
+      <div data-corner="br" style="position:absolute;bottom:-10px;right:-10px;width:22px;height:22px;border-bottom:4px solid #38bdf8;border-right:4px solid #38bdf8;cursor:se-resize;touch-action:none"></div>
+    </div>
   </div>
-  <div style="color:#aaa;font-size:0.75rem">Pincez pour zoomer • Glissez pour repositionner</div>
-  <div style="display:flex;gap:12px">
-    <button onclick="annulerCrop()" style="padding:12px 24px;background:#444;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer">Annuler</button>
-    <button onclick="validerCrop()" style="padding:12px 24px;background:#38bdf8;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer">✓ Utiliser</button>
+  <div style="display:flex;gap:12px;padding:12px;justify-content:center">
+    <button onclick="annulerCrop()" style="padding:12px 28px;background:#444;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer">Annuler</button>
+    <button onclick="validerCrop()" style="padding:12px 28px;background:#38bdf8;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer">✓ Utiliser</button>
   </div>
 </div>
 
