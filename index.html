@@ -697,7 +697,7 @@
     <div id="vue-liste" style="padding:4px 14px 12px"></div>
     <div id="btn-partager" style="position:fixed;bottom:90px;right:16px;display:none;flex-direction:column;gap:6px;z-index:500">
       <button onclick="partagerSMS()" style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:white;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(14,165,233,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px"><span style="font-size:1.2rem">💬</span><span style="font-size:0.55rem;font-weight:800;font-family:'Nunito',sans-serif">SMS</span></button>
-      <button onclick="partagerWhatsApp()" style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);color:white;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(37,211,102,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px"><span style="font-size:1.2rem">💬</span><span style="font-size:0.55rem;font-weight:800;font-family:'Nunito',sans-serif">WHATSAPP</span></button>
+      <button onclick="partagerWhatsApp()" style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);color:white;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(37,211,102,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px"><span style="font-size:1.2rem">💬</span><span style="font-size:0.38rem;font-weight:800;font-family:'Nunito',sans-serif;letter-spacing:-0.5px">WHATSAPP</span></button>
     </div>
   </div>
 
@@ -936,6 +936,32 @@
   <img id="fidelite-photo" style="max-width:95vw;max-height:70vh;border-radius:12px;object-fit:contain;display:none" alt="Carte fidélité">
   <div style="font-size:0.8rem;color:#ccc">Toucher pour fermer</div>
 </div>
+
+<!-- MODAL RECADRAGE PHOTO -->
+<div id="modal-crop" style="display:none;position:fixed;inset:0;background:#000;z-index:10000;flex-direction:column">
+  <div style="color:white;font-weight:800;font-size:0.85rem;letter-spacing:1px;text-align:center;padding:10px">CADRER LA ZONE DU CODE</div>
+  <div style="position:relative;flex:1;overflow:hidden" id="crop-container">
+    <img id="crop-img" style="width:100%;height:100%;object-fit:contain;display:block" draggable="false">
+    <!-- Overlay sombre autour du cadre -->
+    <div id="crop-overlay-t" style="position:absolute;left:0;right:0;top:0;background:rgba(0,0,0,0.55);pointer-events:none"></div>
+    <div id="crop-overlay-b" style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);pointer-events:none"></div>
+    <div id="crop-overlay-l" style="position:absolute;background:rgba(0,0,0,0.55);pointer-events:none"></div>
+    <div id="crop-overlay-r" style="position:absolute;background:rgba(0,0,0,0.55);pointer-events:none"></div>
+    <!-- Cadre -->
+    <div id="crop-frame" style="position:absolute;border:2px solid #38bdf8;">
+      <!-- Poignées coins -->
+      <div data-corner="tl" style="position:absolute;top:-10px;left:-10px;width:36px;height:36px;border-top:4px solid #38bdf8;border-left:4px solid #38bdf8;cursor:nw-resize;touch-action:none;pointer-events:all"></div>
+      <div data-corner="tr" style="position:absolute;top:-10px;right:-10px;width:36px;height:36px;border-top:4px solid #38bdf8;border-right:4px solid #38bdf8;cursor:ne-resize;touch-action:none;pointer-events:all"></div>
+      <div data-corner="bl" style="position:absolute;bottom:-10px;left:-10px;width:36px;height:36px;border-bottom:4px solid #38bdf8;border-left:4px solid #38bdf8;cursor:sw-resize;touch-action:none;pointer-events:all"></div>
+      <div data-corner="br" style="position:absolute;bottom:-10px;right:-10px;width:36px;height:36px;border-bottom:4px solid #38bdf8;border-right:4px solid #38bdf8;cursor:se-resize;touch-action:none;pointer-events:all"></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;padding:12px;justify-content:center">
+    <button onclick="annulerCrop()" style="padding:12px 28px;background:#444;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer">Annuler</button>
+    <button onclick="validerCrop()" style="padding:12px 28px;background:#38bdf8;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer">✓ Utiliser</button>
+  </div>
+</div>
+
 
 <script>
 // ===================== ÉTAT =====================
@@ -1668,8 +1694,9 @@ function editEnseigne(id) {
     editFontSize = e.fontSize || 1.4;
     editLogoData = e.logoData || null;
     editAfficherNom = e.afficherNom || false;
-    editCarteFidelite = e.carteFidelite || '';
-    // Afficher aperçu photo si existante
+    // Ne garder que les vraies photos base64, ignorer les anciens numéros
+    const valCarte = e.carteFidelite || '';
+    editCarteFidelite = valCarte.startsWith('data:image') ? valCarte : '';
     setTimeout(() => {
       const apercu = document.getElementById('apercu-carte-fidelite');
       if (apercu && editCarteFidelite) {
@@ -2500,7 +2527,7 @@ function supprimerPhotoCarte() {
 function ouvrirFidelite() {
   const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
   const ens = enseignes.find(x => x.id === ensId);
-  if (!ens || !ens.carteFidelite) return;
+  if (!ens || !ens.carteFidelite || !ens.carteFidelite.startsWith('data:image')) return;
 
   document.getElementById('fidelite-nom').textContent = ens.nom;
 
@@ -3051,31 +3078,6 @@ document.addEventListener('touchmove', function(e) {
 
 render();
 </script>
-
-<!-- MODAL RECADRAGE PHOTO -->
-<div id="modal-crop" style="display:none;position:fixed;inset:0;background:#000;z-index:10000;flex-direction:column">
-  <div style="color:white;font-weight:800;font-size:0.85rem;letter-spacing:1px;text-align:center;padding:10px">CADRER LA ZONE DU CODE</div>
-  <div style="position:relative;flex:1;overflow:hidden" id="crop-container">
-    <img id="crop-img" style="width:100%;height:100%;object-fit:contain;display:block" draggable="false">
-    <!-- Overlay sombre autour du cadre -->
-    <div id="crop-overlay-t" style="position:absolute;left:0;right:0;top:0;background:rgba(0,0,0,0.55);pointer-events:none"></div>
-    <div id="crop-overlay-b" style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);pointer-events:none"></div>
-    <div id="crop-overlay-l" style="position:absolute;background:rgba(0,0,0,0.55);pointer-events:none"></div>
-    <div id="crop-overlay-r" style="position:absolute;background:rgba(0,0,0,0.55);pointer-events:none"></div>
-    <!-- Cadre -->
-    <div id="crop-frame" style="position:absolute;border:2px solid #38bdf8;">
-      <!-- Poignées coins -->
-      <div data-corner="tl" style="position:absolute;top:-10px;left:-10px;width:36px;height:36px;border-top:4px solid #38bdf8;border-left:4px solid #38bdf8;cursor:nw-resize;touch-action:none;pointer-events:all"></div>
-      <div data-corner="tr" style="position:absolute;top:-10px;right:-10px;width:36px;height:36px;border-top:4px solid #38bdf8;border-right:4px solid #38bdf8;cursor:ne-resize;touch-action:none;pointer-events:all"></div>
-      <div data-corner="bl" style="position:absolute;bottom:-10px;left:-10px;width:36px;height:36px;border-bottom:4px solid #38bdf8;border-left:4px solid #38bdf8;cursor:sw-resize;touch-action:none;pointer-events:all"></div>
-      <div data-corner="br" style="position:absolute;bottom:-10px;right:-10px;width:36px;height:36px;border-bottom:4px solid #38bdf8;border-right:4px solid #38bdf8;cursor:se-resize;touch-action:none;pointer-events:all"></div>
-    </div>
-  </div>
-  <div style="display:flex;gap:12px;padding:12px;justify-content:center">
-    <button onclick="annulerCrop()" style="padding:12px 28px;background:#444;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer">Annuler</button>
-    <button onclick="validerCrop()" style="padding:12px 28px;background:#38bdf8;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer">✓ Utiliser</button>
-  </div>
-</div>
 
 </body>
 </html>
