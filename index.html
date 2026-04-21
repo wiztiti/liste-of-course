@@ -1163,7 +1163,7 @@ function renderListe() {
   vue.innerHTML = `
     <div id="liste-articles">${renderArticles()}</div>
     <div id="zone-ajout-liste" style="margin-top:4px">
-      <button id="btn-plus-liste" onclick="afficherInputListe()" style="background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer;padding:4px 12px;font-weight:300;line-height:1">+</button>
+      <button id="btn-plus-liste" onclick="afficherInputListe()" style="background:none;border:none;color:#e74c3c;font-size:1.6rem;cursor:pointer;padding:4px 12px;font-weight:900;line-height:1">+</button>
       <div id="input-liste-wrap" style="display:none;flex-direction:column;gap:8px;margin-top:4px">
         <input type="text" id="input-article" placeholder="Ajouter un article…"
           onkeydown="if(event.key==='Enter')ajouterArticle()"
@@ -1278,7 +1278,8 @@ function switchTab(tab) {
   ongletActif = tab;
   // Pousser un état si on quitte courses (sauf si on y revient)
   if (tab !== 'courses') {
-    history.pushState({ ouvert: true }, '');
+    // N'empiler qu'un seul état
+    if (!etatEstOuvert()) history.pushState({ ouvert: true }, '');
   } else {
     history.replaceState({ ouvert: false }, '');
   }
@@ -1562,7 +1563,6 @@ function ouvrirCoursesEnseigne(enseigneId) {
   // Injecter le squelette de la page AVANT d'accéder aux éléments
   document.getElementById('vue-magasin').innerHTML = `
     <div id="modal-courses-titre" data-enseigne-id="${enseigneId}" style="${titreTuileStyle}">
-      <span onclick="switchTab('courses')" style="font-size:1.3rem;cursor:pointer;padding-right:10px;flex-shrink:0;color:${tc}">‹</span>
       <h2 style="font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tc};margin:0;flex:1">${e.nom}</h2>
       ${barcodeBtn}
       ${carteBadge}
@@ -1579,7 +1579,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
   if (arts.length === 0) {
     const zoneSaisie = `
       <div id="zone-ajout-rapide" style="margin-top:4px">
-        <button id="btn-plus-ajout" onclick="afficherInputAjout()" style="background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer;padding:4px 12px;font-weight:300;line-height:1">+</button>
+        <button id="btn-plus-ajout" onclick="afficherInputAjout()" style="background:none;border:none;color:#e74c3c;font-size:1.6rem;cursor:pointer;padding:4px 12px;font-weight:900;line-height:1">+</button>
         <div id="input-ajout-wrap" style="display:none;flex-direction:row;gap:8px;margin-top:4px">
           <input class="form-input" type="text" id="modal-cours-input" placeholder="Ajouter un produit…" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')ajouterDepuisModal()">
           <button onclick="ajouterDepuisModal()" style="background:#2d2d44;color:white;border:none;border-radius:12px;padding:0 16px;font-size:1.2rem;cursor:pointer;font-weight:900">+</button>
@@ -1591,7 +1591,7 @@ function ouvrirCoursesEnseigne(enseigneId) {
     const artsTries = [...arts.filter(a => !barre[a.id]), ...arts.filter(a => barre[a.id])];
     const zoneSaisie = `
       <div id="zone-ajout-rapide" style="margin-top:4px">
-        <button id="btn-plus-ajout" onclick="afficherInputAjout()" style="background:none;border:none;color:#aaa;font-size:1.6rem;cursor:pointer;padding:4px 12px;font-weight:300;line-height:1">+</button>
+        <button id="btn-plus-ajout" onclick="afficherInputAjout()" style="background:none;border:none;color:#e74c3c;font-size:1.6rem;cursor:pointer;padding:4px 12px;font-weight:900;line-height:1">+</button>
         <div id="input-ajout-wrap" style="display:none;flex-direction:row;gap:8px;margin-top:4px">
           <input class="form-input" type="text" id="modal-cours-input" placeholder="Ajouter un produit…" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')ajouterDepuisModal()">
           <button onclick="ajouterDepuisModal()" style="background:#2d2d44;color:white;border:none;border-radius:12px;padding:0 16px;font-size:1.2rem;cursor:pointer;font-weight:900">+</button>
@@ -1799,7 +1799,8 @@ function afficherInputAjout() {
     // Fermer
     wrap.style.display = 'none';
     btn.textContent = '+';
-    btn.style.color = '#aaa';
+    btn.style.color = '#e74c3c';
+    btn.style.fontWeight = '900';
     btn.style.fontSize = '1.6rem';
     const inp2 = document.getElementById('modal-cours-input');
     if (inp2) inp2.value = '';
@@ -1817,7 +1818,7 @@ function afficherInputAjout() {
 
 function cacherInputAjout() {
   const btn = document.getElementById('btn-plus-ajout');
-  if (btn) { btn.style.display = 'inline-block'; btn.textContent = '+'; btn.style.color = '#aaa'; btn.style.fontSize = '1.6rem'; }
+  if (btn) { btn.style.display = 'inline-block'; btn.textContent = '+'; btn.style.color = '#e74c3c'; btn.style.fontWeight = '900'; btn.style.fontSize = '1.6rem'; }
   const wrap = document.getElementById('input-ajout-wrap');
   if (wrap) wrap.style.display = 'none';
   const inp = document.getElementById('modal-cours-input');
@@ -2313,42 +2314,25 @@ document.addEventListener('touchend', e => {
 function etatEstOuvert() {
   const mf = document.getElementById('modal-fidelite');
   if (mf && mf.style.display === 'flex') return 'fidelite';
-  const modals = ['modal-edit-enseigne','modal-edit-article',
-                  'modal-confirm-suppr','modal-art-options','modal-choix'];
-  for (const id of modals) {
-    const el = document.getElementById(id);
-    if (el && el.classList.contains('visible')) return id;
+  for (const id of ['modal-edit-enseigne','modal-edit-article','modal-confirm-suppr','modal-art-options','modal-choix','modal-crop']) {
+    const el = document.getElementById(id); if (el && el.classList.contains('visible')) return id;
   }
   if (ongletActif === 'magasin') return 'magasin';
   if (ongletActif !== 'courses') return 'onglet';
   return null;
 }
 
-function majHistorique() {
-  if (etatEstOuvert()) {
-    history.replaceState({ ouvert: true }, '');
-  } else {
-    history.replaceState({ ouvert: false }, '');
-  }
-}
-
-window.addEventListener('popstate', e => {
+window.addEventListener('popstate', () => {
   const ouvert = etatEstOuvert();
-  if (!ouvert) return; // sur courses sans rien → quitter
-
-  // Fermer
+  if (!ouvert) return;
   if (ouvert === 'fidelite') fermerFidelite();
-  else if (ouvert === 'magasin') switchTab('courses');
-  else if (ouvert === 'onglet') switchTab('courses');
+  else if (ouvert === 'magasin' || ouvert === 'onglet') switchTab('courses');
   else fermerModal(ouvert);
-
-  // Repousser un état pour le prochain retour si encore ouvert
-  if (etatEstOuvert()) {
-    history.pushState({ ouvert: true }, '');
-  }
+  // Toujours repousser UN seul état si encore ouvert
+  if (etatEstOuvert()) history.pushState({ ouvert: true }, '');
 });
 
-// Pousser l'état initial
+// État initial
 history.replaceState({ ouvert: false }, '');
 
 
@@ -2541,7 +2525,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  history.pushState({ ouvert: true }, '');
+  if (!etatEstOuvert()) history.pushState({ ouvert: true }, '');
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
 }
 
