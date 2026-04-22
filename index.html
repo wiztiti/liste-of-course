@@ -1274,14 +1274,14 @@ function toggleSection(header, section) {
 
 let ongletActif = 'courses';
 let enseigneIdCourant = null;
+let _depuisPopstate = false;
 function switchTab(tab) {
   ongletActif = tab;
   // Pousser un état si on quitte courses (sauf si on y revient)
   if (tab !== 'courses') {
-    // N'empiler qu'un seul état
-    if (!etatEstOuvert()) history.pushState({ ouvert: true }, '');
+    if (!_depuisPopstate) history.pushState({ ouvert: true }, '');
   } else {
-    history.replaceState({ ouvert: false }, '');
+    if (!_depuisPopstate) history.replaceState({ ouvert: false }, '');
   }
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
@@ -2325,11 +2325,13 @@ function etatEstOuvert() {
 window.addEventListener('popstate', () => {
   const ouvert = etatEstOuvert();
   if (!ouvert) return;
+  _depuisPopstate = true;
   if (ouvert === 'fidelite') fermerFidelite();
   else if (ouvert === 'magasin' || ouvert === 'onglet') switchTab('courses');
   else fermerModal(ouvert);
-  // Toujours repousser UN seul état si encore ouvert
-  if (etatEstOuvert()) history.pushState({ ouvert: true }, '');
+  _depuisPopstate = false;
+  // Si encore quelque chose d'ouvert, remplacer l'état (pas empiler)
+  if (etatEstOuvert()) history.replaceState({ ouvert: true }, '');
 });
 
 // État initial
@@ -2525,7 +2527,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  if (!etatEstOuvert()) history.pushState({ ouvert: true }, '');
+  history.pushState({ ouvert: true }, '');
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
 }
 
