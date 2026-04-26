@@ -1280,7 +1280,7 @@ function switchTab(tab) {
   ongletActif = tab;
   // Pousser un état si on quitte courses (sauf si on y revient)
   if (tab !== 'courses') {
-    if (!_depuisPopstate) history.pushState({ ouvert: true }, '');
+    if (!_depuisPopstate && (!history.state || !history.state.ouvert)) history.pushState({ ouvert: true }, '');
   } else {
     if (!_depuisPopstate) history.replaceState({ ouvert: false }, '');
   }
@@ -2528,7 +2528,7 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  history.pushState({ ouvert: true }, '');
+  if (!history.state || !history.state.ouvert) history.pushState({ ouvert: true }, '');
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
 }
 
