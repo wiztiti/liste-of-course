@@ -1091,6 +1091,14 @@ let barre = charger('mc_barre', {});
 try { localStorage.setItem('mc_enseignes', JSON.stringify(enseignes)); } catch(e) {}
 appliquerApparence();
 
+// Choisir une scène aléatoire différente de la dernière
+const _toutesScenes = Object.keys(SCENES);
+const _derniereScene = apparence.scene || 'plage';
+const _autresScenes = _toutesScenes.filter(s => s !== _derniereScene);
+const _nouvelleScene = _autresScenes[Math.floor(Math.random() * _autresScenes.length)];
+apparence.scene = _nouvelleScene;
+try { localStorage.setItem('mc_apparence', JSON.stringify(apparence)); } catch(e) {}
+
 // Edit enseigne
 let editEnseigneId = null;
 let editCouleurSelectionnee = '#FF6B9D';
