@@ -1278,12 +1278,7 @@ let enseigneIdCourant = null;
 let _depuisPopstate = false;
 function switchTab(tab) {
   ongletActif = tab;
-  // Pousser un état si on quitte courses (sauf si on y revient)
-  if (tab !== 'courses') {
-    if (!_depuisPopstate && (!history.state || !history.state.ouvert)) history.pushState({ ouvert: true }, '');
-  } else {
-    if (!_depuisPopstate) history.replaceState({ ouvert: false }, '');
-  }
+  // pas de gestion historique ici
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
     if (p) p.style.display = t === tab ? (t === 'magasin' ? 'block' : 'flex') : 'none';
@@ -2325,18 +2320,20 @@ function etatEstOuvert() {
 
 window.addEventListener('popstate', () => {
   const ouvert = etatEstOuvert();
-  if (!ouvert) return;
-  _depuisPopstate = true;
-  if (ouvert === 'fidelite') fermerFidelite();
-  else if (ouvert === 'magasin' || ouvert === 'onglet') switchTab('courses');
-  else fermerModal(ouvert);
-  _depuisPopstate = false;
-  // Si encore quelque chose d'ouvert, remplacer l'état (pas empiler)
-  if (etatEstOuvert()) history.replaceState({ ouvert: true }, '');
+  if (ouvert) {
+    // Fermer ce qui est ouvert et repousser l'état sentinelle
+    _depuisPopstate = true;
+    if (ouvert === 'fidelite') fermerFidelite();
+    else if (ouvert === 'magasin' || ouvert === 'onglet') switchTab('courses');
+    else fermerModal(ouvert);
+    _depuisPopstate = false;
+    history.pushState({ sentinelle: true }, '');
+  }
+  // Si rien d'ouvert : laisser le navigateur quitter
 });
 
-// État initial
-history.replaceState({ ouvert: false }, '');
+// Pousser UN SEUL état sentinelle au démarrage
+history.pushState({ sentinelle: true }, '');
 
 
 // ===================== CARTE FIDÉLITÉ =====================
@@ -2528,7 +2525,6 @@ function ouvrirFidelite() {
 
   const modal = document.getElementById('modal-fidelite');
   modal.style.display = 'flex';
-  if (!history.state || !history.state.ouvert) history.pushState({ ouvert: true }, '');
   try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
 }
 
