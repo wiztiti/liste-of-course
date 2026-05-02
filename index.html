@@ -1286,7 +1286,10 @@ let enseigneIdCourant = null;
 let _depuisPopstate = false;
 function switchTab(tab) {
   ongletActif = tab;
-  // pas de gestion historique ici
+  // Repousser l'état sentinelle si on quitte courses
+  if (tab !== 'courses' && !_depuisPopstate) {
+    history.pushState({ sentinelle: true }, '');
+  }
   ['courses','liste','enseignes','magasin'].forEach(t => {
     const p = document.getElementById('page-' + t);
     if (p) p.style.display = t === tab ? (t === 'magasin' ? 'block' : 'flex') : 'none';
