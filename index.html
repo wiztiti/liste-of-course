@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1836,4 +1837,1342 @@ function editEnseigne(id) {
   ouvrirModal('modal-edit-enseigne');
   setTimeout(() => {
     majApercu();
-    ma
+    majApercuLogo();
+    const cf = document.getElementById('edit-carte-fidelite');
+    if (cf) cf.value = editCarteFidelite;
+    document.querySelectorAll('input[name="edit-carte-type"]').forEach(r => {
+      r.checked = r.value === editCarteType;
+    });
+    // Remplir les suggestions
+    const hexToRgbS = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
+    const sg = document.getElementById('enseignes-suggerees');
+    if (sg) {
+      sg.innerHTML = [...ENSEIGNES_CONNUES].sort((a,b) => a.nom.localeCompare(b.nom, 'fr')).map(e => `
+        <button onclick="choisirEnseigne(this)" data-nom="${e.nom}" data-couleur="${e.couleur}" data-texte="${e.texteCouleur}"
+          style="background:linear-gradient(135deg,rgba(${hexToRgbS(e.couleur)},0.18) 0%,rgba(${hexToRgbS(e.couleur)},0.07) 50%,rgba(${hexToRgbS(e.couleur)},0.18) 100%);border-left:4px solid ${e.couleur};border-right:4px solid ${e.couleur};border-top:none;border-bottom:none;border-radius:20px;padding:5px 12px;font-family:'Oswald',sans-serif;font-weight:700;font-size:0.8rem;letter-spacing:1px;text-transform:uppercase;color:${e.couleur};cursor:pointer;white-space:nowrap;background-color:white">
+          ${e.nom}
+        </button>`).join('');
+    }
+  }, 50);
+}
+
+function ajouterEnseigne() {
+  editEnseigne(null);
+}
+
+let enseigneASupprimer = null;
+let enseigneCourseActive = null;
+
+function effacerCoches() {
+  const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
+  const coches = articles.filter(a => a.enseigneId === ensId && barre[a.id]);
+  if (coches.length === 0) return;
+  coches.forEach(a => {
+    articles = articles.filter(x => x.id !== a.id);
+    delete barre[a.id];
+  });
+  sauvegarder();
+  ouvrirCoursesEnseigne(ensId);
+  render();
+}
+
+function afficherInputListe() {
+  const wrap = document.getElementById('input-liste-wrap');
+  const btn = document.getElementById('btn-plus-liste');
+  if (!wrap || !btn) return;
+  if (wrap.style.display === 'flex') {
+    wrap.style.display = 'none';
+    btn.textContent = '+';
+    btn.style.color = '#aaa';
+    btn.style.fontSize = '1.6rem';
+    const inp = document.getElementById('input-article');
+    if (inp) inp.value = '';
+  } else {
+    wrap.style.display = 'flex';
+    btn.textContent = '×';
+    btn.style.color = '#e74c3c';
+    btn.style.fontSize = '1.8rem';
+    setTimeout(() => {
+      const inp = document.getElementById('input-article');
+      if (inp) inp.focus();
+    }, 100);
+  }
+}
+
+function afficherInputAjout() {
+  const wrap = document.getElementById('input-ajout-wrap');
+  const btn = document.getElementById('btn-plus-ajout');
+  if (wrap.style.display === 'flex') {
+    // Fermer
+    wrap.style.display = 'none';
+    btn.textContent = '+';
+    btn.style.color = '#e74c3c';
+    btn.style.fontWeight = '900';
+    btn.style.fontSize = '1.6rem';
+    const inp2 = document.getElementById('modal-cours-input');
+    if (inp2) inp2.value = '';
+  } else {
+    // Ouvrir
+    wrap.style.display = 'flex';
+    const inp = document.getElementById('modal-cours-input');
+    if (inp) inp.value = '';
+    btn.textContent = '×';
+    btn.style.color = '#e74c3c';
+    btn.style.fontSize = '1.8rem';
+    setTimeout(() => { if (inp) inp.focus(); }, 100);
+  }
+}
+
+function cacherInputAjout() {
+  const btn = document.getElementById('btn-plus-ajout');
+  if (btn) { btn.style.display = 'inline-block'; btn.textContent = '+'; btn.style.color = '#e74c3c'; btn.style.fontWeight = '900'; btn.style.fontSize = '1.6rem'; }
+  const wrap = document.getElementById('input-ajout-wrap');
+  if (wrap) wrap.style.display = 'none';
+  const inp = document.getElementById('modal-cours-input');
+  if (inp) inp.value = '';
+}
+
+function ajouterDepuisModal() {
+  const input = document.getElementById('modal-cours-input');
+  const nom = input.value.trim();
+  if (!nom) return;
+  const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
+  articles.push({ id: 'a' + Date.now(), nom, enseigneId: ensId, couleur: couleurAjout });
+  couleurAjout = '#000000';
+  sauvegarder();
+  input.value = '';
+  input.focus();
+  cacherInputAjout();
+  ouvrirCoursesEnseigne(ensId);
+  render();
+  const liste = document.getElementById('modal-courses-liste');
+  if (liste) liste.scrollTop = 0;
+}
+
+function annulerEffacement() {
+  document.getElementById('chk-non-trouves').checked = false;
+  // btn-effacer toujours visible
+}
+function supprimerEnseigne(id) {
+  enseigneASupprimer = id;
+  const e = enseignes.find(x => x.id === id);
+  document.getElementById('confirm-suppr-txt').textContent = e ? `Supprimer "${e.nom}" et tous ses articles ?` : 'Confirmer la suppression ?';
+  ouvrirModal('modal-confirm-suppr');
+}
+function confirmerSuppression() {
+  const modal = document.getElementById('modal-confirm-suppr');
+  if (modal.dataset.mode === 'autres') {
+    const ensId = modal.dataset.ensId;
+    articles = articles.filter(a => a.enseigneId !== ensId);
+    sauvegarder();
+    modal.dataset.mode = '';
+    fermerModal('modal-confirm-suppr');
+    render();
+    return;
+  }
+  if (!enseigneASupprimer) return;
+  enseignes = enseignes.filter(e => e.id !== enseigneASupprimer);
+  ordreMagasins = ordreMagasins.filter(i => i !== enseigneASupprimer);
+  articles = articles.filter(a => a.enseigneId !== enseigneASupprimer);
+  enseigneASupprimer = null;
+  sauvegarder();
+  fermerModal('modal-confirm-suppr');
+  carteOuverte = 'reglages';
+  render();
+}
+
+function choisirCouleur(el) {
+  editCouleurSelectionnee = el.dataset.color;
+  document.querySelectorAll('#color-picker-fond [data-color]').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  majApercu();
+}
+
+function choisirCouleurCustom(val) {
+  editCouleurSelectionnee = val;
+  document.querySelectorAll('#color-picker-fond [data-color]').forEach(s => s.classList.remove('active'));
+  majApercu();
+}
+
+function choisirCouleurTexte(el) {
+  editTexteCouleur = el.dataset.texte;
+  document.querySelectorAll('#color-picker-texte [data-texte]').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  majApercu();
+}
+
+function choisirCouleurTexteCustom(val) {
+  editTexteCouleur = val;
+  document.querySelectorAll('#color-picker-texte [data-texte]').forEach(s => s.classList.remove('active'));
+  majApercu();
+}
+
+function choisirEnseigne(btn) {
+  document.getElementById('edit-nom').value = btn.dataset.nom;
+  editCouleurSelectionnee = btn.dataset.couleur;
+  editTexteCouleur = btn.dataset.texte;
+  document.querySelectorAll('#color-picker-fond [data-color]').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#color-picker-texte [data-texte]').forEach(s => s.classList.remove('active'));
+  majApercu();
+}
+
+function importerLogo(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    // Redimensionner via canvas
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const max = 200;
+      const ratio = Math.min(max / img.width, max / img.height);
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      editLogoData = canvas.toDataURL('image/png', 0.85);
+      majApercuLogo();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function supprimerLogo() {
+  editLogoData = null;
+  document.getElementById('input-logo-file').value = '';
+  majApercuLogo();
+}
+
+function majApercuLogo() {
+  const apercu = document.getElementById('apercu-logo-tuile');
+  const btnSuppr = document.getElementById('btn-suppr-logo');
+  if (!apercu) return;
+  if (editLogoData) {
+    apercu.innerHTML = `<img src="${editLogoData}" style="width:100%;height:100%;object-fit:contain;border-radius:10px">`;
+    if (btnSuppr) btnSuppr.style.display = 'flex';
+  } else {
+    apercu.innerHTML = '<span style="color:#ccc;font-size:1.4rem">🖼️</span>';
+    if (btnSuppr) btnSuppr.style.display = 'none';
+  }
+  majApercu();
+}
+
+function changerTaille(delta) {
+  editFontSize = Math.round((editFontSize + delta) * 10) / 10;
+  editFontSize = Math.min(2.5, Math.max(0.6, editFontSize));
+  const lbl = document.getElementById('fontsize-label');
+  if (lbl) lbl.textContent = editFontSize.toFixed(1);
+  majApercu();
+}
+
+function majApercu() {
+  const nomEl = document.getElementById('edit-nom');
+  if (!nomEl) return;
+  const nom = nomEl.value || 'Aperçu';
+  const fs = editFontSize;
+  const apercu = document.getElementById('apercu-tuile');
+  if (!apercu) return;
+  const bg = editCouleurSelectionnee;
+  const hexToRgbA = h => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '128,128,128'; };
+  const rgbA = hexToRgbA(bg);
+  apercu.style.cssText = `background:linear-gradient(135deg,rgba(${rgbA},0.18) 0%,rgba(${rgbA},0.07) 50%,rgba(${rgbA},0.18) 100%);border-left:6px solid ${bg};border-right:6px solid ${bg};border-top:none;border-bottom:none;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,0.1);height:56px;display:flex;align-items:center;padding:0 16px;margin-bottom:16px;transition:all 0.2s`;
+  const span = document.getElementById('apercu-nom');
+  if (!span) return;
+  span.textContent = nom;
+  span.style.color = editTexteCouleur;
+  span.style.textShadow = 'none';
+  const nomLen = nom.length;
+  const autoFs = nomLen > 12 ? 1.0 : nomLen > 8 ? 1.15 : 1.3;
+  span.style.fontSize = autoFs + 'rem';
+  const lbl = document.getElementById('fontsize-label');
+  if (lbl) lbl.textContent = fs.toFixed(1);
+}
+
+function validerEnseigneEdit() {
+  const nom = document.getElementById('edit-nom').value.trim();
+  if (!nom) { alert('Merci de saisir un nom.'); return; }
+  const fontSize = editFontSize;
+
+  const carteFidelite = editCarteFidelite || '';
+  const carteType = 'photo';
+
+  if (editEnseigneId) {
+    const idx = enseignes.findIndex(e => e.id === editEnseigneId);
+    if (idx > -1) {
+      enseignes[idx] = { ...enseignes[idx], nom, couleur: editCouleurSelectionnee, texteCouleur: editTexteCouleur, fontSize, logoData: editLogoData, afficherNom: true, carteFidelite, carteType };
+    }
+  } else {
+    const newId = 'e' + Date.now();
+    enseignes.push({ id: newId, nom, couleur: editCouleurSelectionnee, texteCouleur: editTexteCouleur, fontSize, logoData: editLogoData, afficherNom: true, carteFidelite, carteType });
+    ordreMagasins.push(newId);
+  }
+  sauvegarder();
+  fermerModal('modal-edit-enseigne');
+  carteOuverte = 'reglages';
+  render();
+}
+
+
+// ===================== DRAG ARTICLES MODAL =====================
+let artDragSrcId = null;
+let artDragEl = null;
+let artDragClone = null;
+let artDragStartY = 0;
+let artLongPressTimer = null;
+let artDragActive = false;
+let artJustDragged = false;
+
+function initArticleDrag() {
+  // Rien à faire, les events sont inline sur les poignées
+}
+
+function artDragStart(e, id) {
+  e.preventDefault();
+  artDragSrcId = id;
+  artDragEl = document.getElementById('ma-' + id);
+  artDragStartY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+  artDragActive = false;
+
+  artLongPressTimer = setTimeout(() => {
+    artDragActive = true;
+    if (navigator.vibrate) navigator.vibrate(40);
+    artDragEl.classList.add('dragging-art');
+
+    // Clone visuel
+    const rect = artDragEl.getBoundingClientRect();
+    artDragClone = artDragEl.cloneNode(true);
+    artDragClone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:9999;pointer-events:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.2);background:white`;
+    document.body.appendChild(artDragClone);
+  }, 200);
+
+  document.addEventListener('pointermove', artDragMove, {passive:false});
+  document.addEventListener('pointerup', artDragEnd);
+  document.addEventListener('pointercancel', artDragEnd);
+}
+
+function artDragMove(e) {
+  if (!artDragActive) return;
+  e.preventDefault();
+  const y = e.clientY;
+
+  // Annuler si on sort de la page magasin
+  const pageMag = document.getElementById('page-magasin');
+  if (pageMag) {
+    const mr = pageMag.getBoundingClientRect();
+    if (e.clientX < mr.left || e.clientX > mr.right || y < mr.top || y > mr.bottom) {
+      artDragEnd(e);
+      return;
+    }
+  }
+
+  if (artDragClone) {
+    const rect = artDragEl.getBoundingClientRect();
+    artDragClone.style.top = (y - rect.height/2) + 'px';
+  }
+
+  // Auto-scroll quand on approche des bords de la liste
+  const liste = document.getElementById('modal-courses-liste');
+  if (liste) {
+    const lr = liste.getBoundingClientRect();
+    const zone = 60;
+    const speed = 8;
+    if (y < lr.top + zone) liste.scrollTop -= speed;
+    else if (y > lr.bottom - zone) liste.scrollTop += speed;
+  }
+
+  // Trouver l'élément cible
+  document.querySelectorAll('.modal-article').forEach(el => el.classList.remove('drag-over-art'));
+  if (artDragClone) artDragClone.style.display = 'none';
+  const target = document.elementFromPoint(e.clientX, y);
+  if (artDragClone) artDragClone.style.display = '';
+  const targetEl = target && target.closest('.modal-article');
+  if (targetEl && targetEl !== artDragEl) {
+    targetEl.classList.add('drag-over-art');
+  }
+}
+
+function artDragEnd(e) {
+  clearTimeout(artLongPressTimer);
+  document.removeEventListener('pointermove', artDragMove);
+  document.removeEventListener('pointerup', artDragEnd);
+  document.removeEventListener('pointercancel', artDragEnd);
+
+  if (artDragClone) { artDragClone.remove(); artDragClone = null; }
+  document.querySelectorAll('.modal-article').forEach(el => el.classList.remove('drag-over-art', 'dragging-art'));
+
+  if (!artDragActive) { artDragActive = false; return; }
+  artDragActive = false;
+
+  const y = e.clientY;
+  const targetEl = (() => {
+    if (artDragClone) return null;
+    const tmp = document.elementFromPoint(e.clientX, y);
+    return tmp && tmp.closest('.modal-article');
+  })();
+
+  // Chercher la cible via position Y
+  let best = null;
+  document.querySelectorAll('.modal-article').forEach(el => {
+    if (el === artDragEl) return;
+    const r = el.getBoundingClientRect();
+    if (y >= r.top && y <= r.bottom) best = el;
+  });
+
+  if (best) {
+    const targetId = best.dataset.artId;
+    const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
+    const ensArts = articles.filter(a => a.enseigneId === ensId);
+    const otherArts = articles.filter(a => a.enseigneId !== ensId);
+    const si = ensArts.findIndex(a => a.id === artDragSrcId);
+    const ti = ensArts.findIndex(a => a.id === targetId);
+    if (si !== -1 && ti !== -1 && si !== ti) {
+      const [moved] = ensArts.splice(si, 1);
+      ensArts.splice(ti, 0, moved);
+      articles = [...otherArts, ...ensArts];
+      sauvegarder();
+      ouvrirCoursesEnseigne(ensId);
+      // Scroller pour rendre visible l'article déplacé
+      setTimeout(() => {
+        const el = document.getElementById('ma-' + artDragSrcId);
+        if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }, 50);
+    }
+  }
+  if (artDragActive) { artJustDragged = true; setTimeout(() => { artJustDragged = false; }, 300); }
+  artDragSrcId = null;
+  artDragEl = null;
+}
+
+
+
+
+
+
+
+
+
+function construireApparence() {
+  const sec = document.getElementById('section-apparence');
+  if (!sec) return;
+  sec.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07)';
+
+  // Couleur de fond
+  // Scènes
+  const lblScene = document.createElement('label');
+  lblScene.style.cssText = 'font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px';
+  lblScene.textContent = 'Illustration';
+  wrap.appendChild(lblScene);
+
+  const grilleScene = document.createElement('div');
+  grilleScene.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px';
+  Object.entries(SCENES).forEach(([key, sc]) => {
+    const d = document.createElement('div');
+    d.dataset.scene = key;
+    d.style.cssText = `height:50px;border-radius:10px;overflow:hidden;border:${(apparence.scene||'plage')===key?'3px solid #333':'2px solid #eee'};cursor:pointer;position:relative`;
+    const svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svgEl.setAttribute('viewBox','0 0 400 80');
+    svgEl.style.cssText = 'width:100%;height:100%';
+    svgEl.innerHTML = sc.svg;
+    d.appendChild(svgEl);
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:0.6rem;font-weight:800;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.8)';
+    lbl.textContent = sc.label;
+    d.appendChild(lbl);
+    d.addEventListener('click', () => changerScene(key));
+    grilleScene.appendChild(d);
+  });
+  wrap.appendChild(grilleScene);
+
+  const lbl1 = document.createElement('label');
+  lbl1.style.cssText = 'font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px';
+  lbl1.textContent = 'Couleur de fond';
+  wrap.appendChild(lbl1);
+
+  const palFond = document.createElement('div');
+  palFond.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px';
+  ['#ffffff','#fafafa','#fffde7','#fff9c4','#f0fdf4','#e8f5e9','#eff6ff','#e3f2fd','#fdf4ff','#fce4ec','#fff3e0','#fbe9e7'].forEach(c => {
+    const d = document.createElement('div');
+    d.dataset.fond = c;
+    d.style.cssText = `width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${apparence.couleur===c?'#333':'#ddd'};cursor:pointer`;
+    d.addEventListener('click', () => changerCouleurFond(c));
+    palFond.appendChild(d);
+  });
+  const inpFond = document.createElement('input');
+  inpFond.type = 'color';
+  inpFond.value = apparence.couleur;
+  inpFond.style.cssText = 'width:32px;height:32px;border-radius:50%;border:2px solid #ddd;cursor:pointer;padding:0';
+  inpFond.addEventListener('input', () => changerCouleurFond(inpFond.value));
+  palFond.appendChild(inpFond);
+  wrap.appendChild(palFond);
+
+  // Motif
+  const lbl2 = document.createElement('label');
+  lbl2.style.cssText = 'font-size:0.85rem;font-weight:800;color:#555;display:block;margin-bottom:8px';
+  lbl2.textContent = 'Motif';
+  wrap.appendChild(lbl2);
+
+  const grille = document.createElement('div');
+  grille.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px';
+  [['aucun','Aucun',''],['points','Points','radial-gradient(#ccc 1px,transparent 1px)'],['grille','Grille','linear-gradient(#ddd 1px,transparent 1px),linear-gradient(90deg,#ddd 1px,transparent 1px)'],['diagonales','Diagonales','repeating-linear-gradient(45deg,#ddd 0,#ddd 1px,transparent 0,transparent 50%)'],['vague1','Vague 1',''],['vague2','Vague 2',''],['losanges','Losanges','linear-gradient(135deg,#ddd 25%,transparent 25%),linear-gradient(225deg,#ddd 25%,transparent 25%),linear-gradient(315deg,#ddd 25%,transparent 25%),linear-gradient(45deg,#ddd 25%,transparent 25%)'],['vichy','Vichy 1',''],['vichy2','Vichy 2',''],['vichy3','Vichy 3','']].forEach(([id,nom,bg]) => {
+    const d = document.createElement('div');
+    d.dataset.motif = id;
+    d.style.cssText = `height:50px;border-radius:10px;background-color:#f5f5f5;background-image:${bg};background-size:16px 16px;border:2px solid ${apparence.motif===id?'#333':'#eee'};cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px`;
+    const span = document.createElement('span');
+    span.style.cssText = 'font-size:0.65rem;font-weight:800;color:#555;background:rgba(255,255,255,0.8);padding:1px 4px;border-radius:4px';
+    span.textContent = nom;
+    d.appendChild(span);
+    d.addEventListener('click', () => changerMotif(id));
+    grille.appendChild(d);
+  });
+  wrap.appendChild(grille);
+
+  // Couleur du motif
+  const palMotifWrap = document.createElement('div');
+  palMotifWrap.id = 'palette-motif';
+  palMotifWrap.style.display = apparence.motif === 'aucun' ? 'none' : 'block';
+
+  const lbl3 = document.createElement('label');
+  lbl3.style.cssText = 'font-size:0.85rem;font-weight:800;color:#555;display:block;margin:12px 0 8px';
+  lbl3.textContent = 'Couleur du motif';
+  palMotifWrap.appendChild(lbl3);
+
+  const palMotif = document.createElement('div');
+  palMotif.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+  ['#e2e8f0','#fff9c4','#fffde7','#bbf7d0','#a7f3d0','#bae6fd','#93c5fd','#fde68a','#fecaca','#e9d5ff','#fed7aa','#fce7f3'].forEach(c => {
+    const d = document.createElement('div');
+    d.dataset.cm = c;
+    d.style.cssText = `width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${apparence.couleurMotif===c?'#333':'#ddd'};cursor:pointer`;
+    d.addEventListener('click', () => changerCouleurMotif(c));
+    palMotif.appendChild(d);
+  });
+  const inpMotif = document.createElement('input');
+  inpMotif.type = 'color';
+  inpMotif.value = apparence.couleurMotif || '#e2e8f0';
+  inpMotif.style.cssText = 'width:32px;height:32px;border-radius:50%;border:2px solid #ddd;cursor:pointer;padding:0';
+  inpMotif.addEventListener('input', () => changerCouleurMotif(inpMotif.value));
+  palMotif.appendChild(inpMotif);
+  palMotifWrap.appendChild(palMotif);
+  wrap.appendChild(palMotifWrap);
+
+  // Bouton fermer
+  const btnFermer = document.createElement('button');
+  btnFermer.textContent = '✕ Fermer';
+  btnFermer.style.cssText = 'width:100%;margin-top:14px;padding:12px;background:linear-gradient(135deg,#fefce8,#fef08a);color:#854d0e;border:1px solid #fef08a;border-radius:14px;font-family:"Nunito",sans-serif;font-weight:900;font-size:0.9rem;cursor:pointer';
+  btnFermer.addEventListener('click', () => {
+    const sec = document.getElementById('section-apparence');
+    if (sec) sec.style.display = 'none';
+  });
+  wrap.appendChild(btnFermer);
+
+  sec.appendChild(wrap);
+}
+
+function bindApparenceListeners() {
+  document.querySelectorAll('[data-fond]').forEach(el => {
+    el.addEventListener('click', () => changerCouleurFond(el.dataset.fond));
+  });
+  document.querySelectorAll('[data-motif]').forEach(el => {
+    el.addEventListener('click', () => changerMotif(el.dataset.motif));
+  });
+  document.querySelectorAll('[data-cm]').forEach(el => {
+    el.addEventListener('click', () => changerCouleurMotif(el.dataset.cm));
+  });
+}
+
+// ===================== SWIPE HORIZONTAL ENTRE ONGLETS =====================
+const TABS_ORDER = ['courses', 'liste', 'enseignes'];
+let swipeHStartX = null;
+let swipeHStartY = null;
+
+document.addEventListener('touchstart', e => {
+  if (ongletActif === 'magasin') return;
+  // Ignorer si le touch commence dans la tabbar
+  if (e.target.closest('.tabbar')) return;
+  swipeHStartX = e.touches[0].clientX;
+  swipeHStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+  if (swipeHStartX === null) return;
+  const dx = e.changedTouches[0].clientX - swipeHStartX;
+  const dy = e.changedTouches[0].clientY - swipeHStartY;
+  swipeHStartX = null;
+  swipeHStartY = null;
+  // Geste doit être clairement horizontal : dx > dy * 2 et dx > 80px
+  if (Math.abs(dy) > Math.abs(dx) * 0.4) return;
+  if (Math.abs(dx) < 80) return;
+  const idx = TABS_ORDER.indexOf(ongletActif);
+  if (idx === -1) return;
+  if (dx < 0 && idx < TABS_ORDER.length - 1) switchTab(TABS_ORDER[idx + 1]);
+  else if (dx > 0 && idx > 0) switchTab(TABS_ORDER[idx - 1]);
+}, { passive: true });
+
+// ===================== BOUTON RETOUR ANDROID =====================
+
+
+// Système retour : état de base = niveau 0, tout le reste = niveau 1
+// ===================== BOUTON RETOUR ANDROID =====================
+// Approche : on pousse UN état quand on n'est pas sur courses/rien d'ouvert
+// Le retour consomme cet état et ferme ce qui est ouvert
+// Si on est déjà sur courses sans rien → quitter
+
+function etatEstOuvert() {
+  const mf = document.getElementById('modal-fidelite');
+  if (mf && mf.style.display === 'flex') return 'fidelite';
+  for (const id of ['modal-edit-enseigne','modal-edit-article','modal-confirm-suppr','modal-art-options','modal-choix','modal-crop']) {
+    const el = document.getElementById(id); if (el && el.classList.contains('visible')) return id;
+  }
+  if (ongletActif === 'magasin') return 'magasin';
+  if (ongletActif !== 'courses') return 'onglet';
+  return null;
+}
+
+window.addEventListener('popstate', () => {
+  const ouvert = etatEstOuvert();
+  if (ouvert) {
+    // Fermer ce qui est ouvert et repousser l'état sentinelle
+    _depuisPopstate = true;
+    if (ouvert === 'fidelite') fermerFidelite();
+    else if (ouvert === 'magasin' || ouvert === 'onglet') switchTab('courses');
+    else fermerModal(ouvert);
+    _depuisPopstate = false;
+    history.pushState({ sentinelle: true }, '');
+  }
+  // Si rien d'ouvert : laisser le navigateur quitter
+});
+
+// Pousser UN SEUL état sentinelle au démarrage
+history.pushState({ sentinelle: true }, '');
+
+
+// ===================== CARTE FIDÉLITÉ =====================
+
+// Variables recadrage
+let cropImgSrc = null;
+let cropRect = { x: 0, y: 0, w: 0, h: 0 }; // en px dans le container
+let activeCorner = null;
+let cornerStartX = 0, cornerStartY = 0;
+let cornerStartRect = null;
+
+function chargerPhotoCarte(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    cropImgSrc = ev.target.result;
+    ouvrirCrop(cropImgSrc);
+  };
+  reader.readAsDataURL(file);
+}
+
+function ouvrirCrop(src) {
+  const modal = document.getElementById('modal-crop');
+  const img = document.getElementById('crop-img');
+  modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
+
+  img.onload = () => {
+    const container = document.getElementById('crop-container');
+    const cW = container.offsetWidth;
+    const cH = container.offsetHeight;
+    // Cadre initial : 85% largeur, centré verticalement, hauteur 40%
+    const fw = cW * 0.85;
+    const fh = cH * 0.42;
+    cropRect = {
+      x: (cW - fw) / 2,
+      y: (cH - fh) / 2,
+      w: fw,
+      h: fh
+    };
+    majCropFrame();
+    initCropEvents();
+  };
+  img.src = src;
+}
+
+function majCropFrame() {
+  const frame = document.getElementById('crop-frame');
+  const container = document.getElementById('crop-container');
+  const cW = container.offsetWidth;
+  const cH = container.offsetHeight;
+  const {x, y, w, h} = cropRect;
+
+  frame.style.left = x + 'px';
+  frame.style.top = y + 'px';
+  frame.style.width = w + 'px';
+  frame.style.height = h + 'px';
+
+  // Overlays
+  document.getElementById('crop-overlay-t').style.height = y + 'px';
+  document.getElementById('crop-overlay-b').style.height = (cH - y - h) + 'px';
+  const ol = document.getElementById('crop-overlay-l');
+  ol.style.top = y + 'px'; ol.style.height = h + 'px';
+  ol.style.left = '0'; ol.style.width = x + 'px';
+  const or = document.getElementById('crop-overlay-r');
+  or.style.top = y + 'px'; or.style.height = h + 'px';
+  or.style.right = '0'; or.style.width = (cW - x - w) + 'px';
+}
+
+function initCropEvents() {
+  const frame = document.getElementById('crop-frame');
+  const corners = frame.querySelectorAll('[data-corner]');
+  corners.forEach(corner => {
+    corner.addEventListener('touchstart', e => {
+      e.stopPropagation(); e.preventDefault();
+      activeCorner = corner.dataset.corner;
+      cornerStartX = e.touches[0].clientX;
+      cornerStartY = e.touches[0].clientY;
+      cornerStartRect = { ...cropRect };
+    }, { passive: false });
+  });
+
+  document.addEventListener('touchmove', onCropMove, { passive: false });
+  document.addEventListener('touchend', () => { activeCorner = null; });
+}
+
+function onCropMove(e) {
+  if (!activeCorner) return;
+  e.preventDefault();
+  const dx = e.touches[0].clientX - cornerStartX;
+  const dy = e.touches[0].clientY - cornerStartY;
+  const container = document.getElementById('crop-container');
+  const cW = container.offsetWidth, cH = container.offsetHeight;
+  const minSize = 40;
+  let {x, y, w, h} = cornerStartRect;
+
+  if (activeCorner === 'tl') {
+    const nx = Math.min(x + w - minSize, x + dx);
+    const ny = Math.min(y + h - minSize, y + dy);
+    w = x + w - nx; h = y + h - ny; x = nx; y = ny;
+  } else if (activeCorner === 'tr') {
+    const nw = Math.max(minSize, w + dx);
+    const ny = Math.min(y + h - minSize, y + dy);
+    h = y + h - ny; y = ny; w = nw;
+  } else if (activeCorner === 'bl') {
+    const nx = Math.min(x + w - minSize, x + dx);
+    w = x + w - nx; x = nx;
+    h = Math.max(minSize, h + dy);
+  } else if (activeCorner === 'br') {
+    w = Math.max(minSize, w + dx);
+    h = Math.max(minSize, h + dy);
+  }
+
+  // Contraindre dans le container
+  x = Math.max(0, Math.min(x, cW - minSize));
+  y = Math.max(0, Math.min(y, cH - minSize));
+  w = Math.min(w, cW - x);
+  h = Math.min(h, cH - y);
+
+  cropRect = { x, y, w, h };
+  majCropFrame();
+}
+
+function validerCrop() {
+  const img = document.getElementById('crop-img');
+  const container = document.getElementById('crop-container');
+  const cW = container.offsetWidth;
+  const cH = container.offsetHeight;
+
+  // Ratio image réelle / affichée (object-fit:contain)
+  const natW = img.naturalWidth, natH = img.naturalHeight;
+  const scaleW = cW / natW, scaleH = cH / natH;
+  const scale = Math.min(scaleW, scaleH);
+  const offX = (cW - natW * scale) / 2;
+  const offY = (cH - natH * scale) / 2;
+
+  const sx = (cropRect.x - offX) / scale;
+  const sy = (cropRect.y - offY) / scale;
+  const sw = cropRect.w / scale;
+  const sh = cropRect.h / scale;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(sw); canvas.height = Math.round(sh);
+  const ctx = canvas.getContext('2d');
+  const tmpImg = new Image();
+  tmpImg.onload = () => {
+    ctx.drawImage(tmpImg, Math.max(0,sx), Math.max(0,sy), sw, sh, 0, 0, canvas.width, canvas.height);
+    editCarteFidelite = canvas.toDataURL('image/jpeg', 0.95);
+    const apercu = document.getElementById('apercu-carte-fidelite');
+    if (apercu) {
+      apercu.innerHTML = `<div style="position:relative;display:inline-block"><img src="${editCarteFidelite}" style="max-width:100%;border-radius:10px;border:1px solid #eee"><button onclick="supprimerPhotoCarte()" style="position:absolute;top:6px;right:6px;background:#e74c3c;color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:0.8rem">✕</button></div>`;
+    }
+    document.removeEventListener('touchmove', onCropMove);
+    document.getElementById('modal-crop').style.display = 'none';
+  };
+  tmpImg.src = cropImgSrc;
+}
+
+function annulerCrop() {
+  document.removeEventListener('touchmove', onCropMove);
+  document.getElementById('modal-crop').style.display = 'none';
+  const input = document.getElementById('input-carte-photo');
+  if (input) input.value = '';
+}
+
+function supprimerPhotoCarte() {
+  editCarteFidelite = '';
+  const apercu = document.getElementById('apercu-carte-fidelite');
+  if (apercu) apercu.innerHTML = '';
+  const input = document.getElementById('input-carte-photo');
+  if (input) input.value = '';
+}
+
+function ouvrirFidelite() {
+  const ensId = document.getElementById('modal-courses-titre').dataset.enseigneId;
+  const ens = enseignes.find(x => x.id === ensId);
+  if (!ens || !ens.carteFidelite || !ens.carteFidelite.startsWith('data:image')) return;
+
+  document.getElementById('fidelite-nom').textContent = ens.nom;
+
+  const photo = document.getElementById('fidelite-photo');
+  const canvas = document.getElementById('fidelite-canvas');
+
+  // Afficher la photo
+  photo.src = ens.carteFidelite;
+  photo.style.display = 'block';
+  canvas.style.display = 'none';
+
+  const modal = document.getElementById('modal-fidelite');
+  modal.style.display = 'flex';
+  try { screen.orientation && screen.orientation.lock('portrait').catch(()=>{}); } catch(e) {}
+}
+
+function fermerFidelite() {
+  document.getElementById('modal-fidelite').style.display = 'none';
+  const qrDiv = document.getElementById('fidelite-qr-div');
+  if (qrDiv) qrDiv.innerHTML = '';
+}
+
+
+// ===================== QR CODE HORS LIGNE =====================
+// Algorithme QR Code minimal (version 1-10, mode byte, niveau L)
+const QR = (() => {
+  const GF = 256, PRIM = 0x11d;
+  const gfExp = new Uint8Array(512), gfLog = new Uint8Array(256);
+  let x = 1;
+  for (let i = 0; i < 255; i++) {
+    gfExp[i] = x; gfLog[x] = i;
+    x <<= 1; if (x & 256) x ^= PRIM;
+  }
+  for (let i = 255; i < 512; i++) gfExp[i] = gfExp[i - 255];
+
+  const mul = (a, b) => a && b ? gfExp[gfLog[a] + gfLog[b]] : 0;
+  const polyMul = (p, q) => {
+    const r = new Uint8Array(p.length + q.length - 1);
+    for (let i = 0; i < p.length; i++)
+      for (let j = 0; j < q.length; j++)
+        r[i+j] ^= mul(p[i], q[j]);
+    return r;
+  };
+  const polyDiv = (msg, gen) => {
+    let r = new Uint8Array(msg);
+    for (let i = 0; i < msg.length - gen.length + 1; i++) {
+      const c = r[i];
+      if (c) for (let j = 1; j < gen.length; j++) r[i+j] ^= mul(gen[j], c);
+    }
+    return r.slice(msg.length - gen.length + 1);
+  };
+  const rsGen = (nsym) => {
+    let g = new Uint8Array([1]);
+    for (let i = 0; i < nsym; i++) g = polyMul(g, new Uint8Array([1, gfExp[i]]));
+    return g;
+  };
+  const rsEncode = (msg, nsym) => {
+    const gen = rsGen(nsym);
+    const ext = new Uint8Array(msg.length + nsym);
+    ext.set(msg);
+    return polyDiv(ext, gen);
+  };
+
+  // QR version info
+  const VERSIONS = [
+    null,
+    {size:21,ec:{L:{blocks:1,data:19,ec:7}}},
+    {size:25,ec:{L:{blocks:1,data:34,ec:10}}},
+    {size:29,ec:{L:{blocks:1,data:55,ec:15}}},
+    {size:33,ec:{L:{blocks:1,data:80,ec:20}}},
+    {size:37,ec:{L:{blocks:1,data:108,ec:26}}},
+    {size:41,ec:{L:{blocks:2,data:136,ec:18}}},
+    {size:45,ec:{L:{blocks:2,data:156,ec:20}}},
+    {size:49,ec:{L:{blocks:2,data:194,ec:24}}},
+    {size:53,ec:{L:{blocks:2,data:232,ec:30}}},
+    {size:57,ec:{L:{blocks:4,data:274,ec:18}}},
+  ];
+
+  const ALIGN = [null,[],[[6,18]],[[6,22]],[[6,26]],[[6,30]],[[6,34]],[[6,22,38]],[[6,24,42]],[[6,26,46]],[[6,28,50]]];
+
+  function pickVersion(dataLen) {
+    for (let v = 1; v <= 10; v++) {
+      if (VERSIONS[v].ec.L.data >= dataLen + 4) return v;
+    }
+    throw new Error('Données trop longues');
+  }
+
+  function encode(text) {
+    const bytes = [...text].map(c => c.charCodeAt(0) & 0xFF);
+    const version = pickVersion(bytes.length);
+    const info = VERSIONS[version].ec.L;
+    const size = VERSIONS[version].size;
+
+    // Bitstream
+    const bits = [];
+    const add = (val, n) => { for (let i = n-1; i >= 0; i--) bits.push((val >> i) & 1); };
+    add(0b0100, 4); // mode byte
+    add(bytes.length, 8);
+    bytes.forEach(b => add(b, 8));
+    add(0, 4); // terminator
+    while (bits.length % 8) bits.push(0);
+    const PADS = [0xEC, 0x11];
+    let pi = 0;
+    while (bits.length < info.data * 8) { add(PADS[pi], 8); pi = 1 - pi; }
+
+    // Data bytes
+    const data = [];
+    for (let i = 0; i < bits.length; i += 8) {
+      let b = 0;
+      for (let j = 0; j < 8; j++) b = (b << 1) | (bits[i+j] || 0);
+      data.push(b);
+    }
+
+    // EC per block
+    const blockSize = Math.floor(info.data / info.blocks);
+    const allData = [], allEc = [];
+    for (let b = 0; b < info.blocks; b++) {
+      const block = data.slice(b * blockSize, (b+1) * blockSize);
+      allData.push(block);
+      allEc.push([...rsEncode(new Uint8Array(block), info.ec)]);
+    }
+    const interleaved = [];
+    for (let i = 0; i < allData[0].length; i++) allData.forEach(b => b[i] !== undefined && interleaved.push(b[i]));
+    for (let i = 0; i < allEc[0].length; i++) allEc.forEach(b => b[i] !== undefined && interleaved.push(b[i]));
+
+    // Final bitstream
+    const finalBits = [];
+    interleaved.forEach(b => { for (let i = 7; i >= 0; i--) finalBits.push((b >> i) & 1); });
+    while (finalBits.length % 8) finalBits.push(0);
+
+    // Build matrix
+    const mat = Array.from({length: size}, () => new Array(size).fill(-1));
+    const set = (r, c, v) => { if (r >= 0 && r < size && c >= 0 && c < size) mat[r][c] = v; };
+
+    // Finder patterns
+    const finder = (r, c) => {
+      for (let i = -1; i <= 7; i++) for (let j = -1; j <= 7; j++) {
+        const v = i < 0 || i > 6 || j < 0 || j > 6 ? 0 :
+                  i === 0 || i === 6 || j === 0 || j === 6 ? 1 :
+                  i >= 2 && i <= 4 && j >= 2 && j <= 4 ? 1 : 0;
+        set(r+i, c+j, v);
+      }
+    };
+    finder(0,0); finder(0,size-7); finder(size-7,0);
+
+    // Timing
+    for (let i = 8; i < size-8; i++) { set(6,i,i%2===0?1:0); set(i,6,i%2===0?1:0); }
+
+    // Dark module
+    set(4*version+9, 8, 1);
+
+    // Alignment patterns
+    if (ALIGN[version]) {
+      ALIGN[version].forEach(pos => {
+        pos.forEach(r => pos.forEach(c => {
+          if (mat[r][c] === -1) {
+            for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
+              set(r+i, c+j, (Math.abs(i)===2||Math.abs(j)===2||(!i&&!j))?1:0);
+            }
+          }
+        }));
+      });
+    }
+
+    // Format info (mask 0, L)
+    const FORMAT = [0b111011111000100, 0b111001011110011, 0b111110110101010, 0b111100010011101,
+                    0b110011000101111, 0b110001100011000, 0b110110001000001, 0b110100101110110];
+    const fmt = FORMAT[0];
+    const fmtBits = i => (fmt >> (14-i)) & 1;
+    for (let i = 0; i < 6; i++) { set(8, i, fmtBits(i)); set(i, 8, fmtBits(i)); }
+    set(8,7,fmtBits(6)); set(7,8,fmtBits(6));
+    set(8,8,fmtBits(7)); set(8,size-8,fmtBits(8));
+    for (let i = 0; i < 7; i++) { set(8,size-7+i,fmtBits(9+i)); set(size-7+i,8,fmtBits(9+i)); }
+
+    // Data placement
+    const reserved = (r,c) => mat[r][c] !== -1;
+    let bit = 0;
+    for (let col = size-1; col >= 0; col -= 2) {
+      if (col === 6) col--;
+      for (let row = 0; row < size; row++) {
+        const r = (Math.floor(col/2) % 2 === 0) ? (size-1-row) : row;
+        for (let dc = 0; dc <= 1; dc++) {
+          const c = col - dc;
+          if (!reserved(r,c)) {
+            const b = finalBits[bit++] || 0;
+            mat[r][c] = b ^ ((r+c) % 2 === 0 ? 1 : 0); // mask 0
+          }
+        }
+      }
+    }
+
+    return mat;
+  }
+
+  return { encode };
+})();
+
+function dessinerQR(canvas, text) {
+  // Utiliser qrious avec mode numérique pour les numéros de carte
+  canvas.style.display = 'block';
+  const div = document.getElementById('fidelite-qr-div');
+  if (div) div.innerHTML = '';
+  const size = Math.min(window.innerWidth * 0.7, 280);
+  try {
+    const qr = new QRious({
+      element: canvas,
+      value: text,
+      size: size,
+      level: 'L',
+      background: 'white',
+      foreground: 'black',
+      padding: 10
+    });
+  } catch(e) {
+    canvas.getContext('2d').fillText('Erreur: ' + e.message, 10, 50);
+  }
+}
+
+function dessinerBarcode(canvas, text) {
+  const encoded = encodeCode128(text);
+  const barW = 2;
+  const h = 120;
+  const quiet = 20;
+  canvas.width = encoded.length * barW + quiet * 2;
+  canvas.height = h + 40;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#000';
+  encoded.forEach((bit, i) => {
+    if (bit === 1) ctx.fillRect(quiet + i * barW, 10, barW, h);
+  });
+  ctx.font = '14px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, canvas.width / 2, h + 28);
+}
+
+function encodeCode128(str) {
+  // Table Code128B complète : 107 patterns
+  const C = [
+    [2,1,2,2,2,2],[2,2,2,1,2,2],[2,2,2,2,2,1],[1,2,1,2,2,3],[1,2,1,3,2,2],
+    [1,3,1,2,2,2],[1,2,2,2,1,3],[1,2,2,3,1,2],[1,3,2,2,1,2],[2,2,1,2,1,3],
+    [2,2,1,3,1,2],[2,3,1,2,1,2],[1,1,2,2,3,2],[1,2,2,1,3,2],[1,2,2,2,3,1],
+    [1,1,3,2,2,2],[1,2,3,1,2,2],[1,2,3,2,2,1],[2,2,3,2,1,1],[2,2,1,1,3,2],
+    [2,2,1,2,3,1],[2,1,3,2,1,2],[2,2,3,1,1,2],[3,1,2,1,3,1],[3,1,1,2,2,2],
+    [3,2,1,1,2,2],[3,2,1,2,2,1],[3,1,2,2,1,2],[3,2,2,1,1,2],[3,2,2,2,1,1],
+    [2,1,2,1,2,3],[2,1,2,3,2,1],[2,3,2,1,2,1],[1,1,1,3,2,3],[1,3,1,1,2,3],
+    [1,3,1,3,2,1],[1,1,2,3,1,3],[1,3,2,1,1,3],[1,3,2,3,1,1],[2,1,1,3,1,3],
+    [2,3,1,1,1,3],[2,3,1,3,1,1],[1,1,2,1,3,3],[1,1,2,3,3,1],[1,3,2,1,3,1],
+    [1,1,3,1,2,3],[1,1,3,3,2,1],[1,3,3,1,2,1],[3,1,3,1,2,1],[2,1,1,3,3,1],
+    [2,3,1,1,3,1],[2,1,3,1,1,3],[2,1,3,3,1,1],[2,1,3,1,3,1],[3,1,1,1,2,3],
+    [3,1,1,3,2,1],[3,3,1,1,2,1],[3,1,2,1,1,3],[3,1,2,3,1,1],[3,3,2,1,1,1],
+    [3,1,4,1,1,1],[2,2,1,4,1,1],[4,3,1,1,1,1],[1,1,1,2,2,4],[1,1,1,4,2,2],
+    [1,2,1,1,2,4],[1,2,1,4,2,1],[1,4,1,1,2,2],[1,4,1,2,2,1],[1,1,2,2,1,4],
+    [1,1,2,4,1,2],[1,2,2,1,1,4],[1,2,2,4,1,1],[1,4,2,1,1,2],[1,4,2,2,1,1],
+    [2,4,1,2,1,1],[2,2,1,1,1,4],[4,1,3,1,1,1],[2,4,1,1,1,2],[1,3,4,1,1,1],
+    [1,1,1,2,4,2],[1,2,1,1,4,2],[1,2,1,2,4,1],[1,1,4,2,1,2],[1,2,4,1,1,2],
+    [1,2,4,2,1,1],[4,1,1,2,1,2],[4,2,1,1,1,2],[4,2,1,2,1,1],[2,1,2,1,4,1],
+    [2,1,4,1,2,1],[4,1,2,1,2,1],[1,1,1,1,4,3],[1,1,1,3,4,1],[1,3,1,1,4,1],
+    [1,1,4,1,1,3],[1,1,4,3,1,1],[4,1,1,1,1,3],[4,1,1,3,1,1],[1,1,3,1,4,1],
+    [1,1,4,1,3,1],[3,1,1,1,4,1],[4,1,1,1,3,1],[2,1,1,4,1,2],[2,1,1,2,1,4],
+    [2,1,1,2,3,2] // stop
+  ];
+  const START_B = 104;
+
+  const toBits = (pat) => {
+    const bits = [];
+    pat.forEach((w, i) => { for (let j = 0; j < w; j++) bits.push(i % 2 === 0 ? 1 : 0); });
+    return bits;
+  };
+
+  let bits = toBits(C[START_B]);
+  let check = START_B;
+  for (let i = 0; i < str.length; i++) {
+    const v = str.charCodeAt(i) - 32;
+    if (v < 0 || v > 95) continue;
+    check += (i + 1) * v;
+    bits = bits.concat(toBits(C[v]));
+  }
+  bits = bits.concat(toBits(C[check % 103]));
+  // Pattern stop Code128 fixe
+  bits = bits.concat(toBits([2,3,3,1,1,1,2]));
+  bits.push(1, 1); // termination bar
+  return bits;
+}
+
+// ===================== MODAUX =====================
+function ouvrirModal(id) {
+  document.getElementById(id).classList.add('visible');
+  history.pushState({ ouvert: true }, '');
+}
+function fermerModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('visible');
+}
+// Fermer en cliquant l'overlay
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) fermerModal(this.id);
+  });
+});
+
+// ===================== DRAG & DROP =====================
+let dragSrcId = null;
+
+function initDrag() {
+  const cartes = document.querySelectorAll('.carte-magasin');
+  cartes.forEach(carte => {
+    carte.addEventListener('dragstart', onDragStart);
+    carte.addEventListener('dragover', onDragOver);
+    carte.addEventListener('drop', onDrop);
+    carte.addEventListener('dragend', onDragEnd);
+    // Touch
+    carte.addEventListener('touchstart', onTouchStart, { passive: true });
+    carte.addEventListener('touchmove', onTouchMove, { passive: false });
+    carte.addEventListener('touchend', onTouchEnd);
+    carte.addEventListener('touchcancel', onTouchEnd);
+  });
+}
+
+function onDragStart(e) {
+  dragSrcId = this.getAttribute('data-enseigne-id');
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.carte-magasin').forEach(c => c.classList.remove('drag-over'));
+  this.classList.add('drag-over');
+}
+function onDrop(e) {
+  e.preventDefault();
+  const targetId = this.getAttribute('data-enseigne-id');
+  if (dragSrcId && targetId && dragSrcId !== targetId) {
+    const si = ordreMagasins.indexOf(dragSrcId);
+    const ti = ordreMagasins.indexOf(targetId);
+    if (si > -1 && ti > -1) {
+      ordreMagasins.splice(si, 1);
+      ordreMagasins.splice(ti, 0, dragSrcId);
+      sauvegarder();
+      render();
+      carteOuverte = carteOuverte; // keep
+    }
+  }
+  document.querySelectorAll('.carte-magasin').forEach(c => c.classList.remove('drag-over'));
+}
+function onDragEnd() {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.carte-magasin').forEach(c => c.classList.remove('drag-over'));
+}
+
+// Touch drag — activé uniquement après un long press (~220ms)
+let touchDragId = null, touchClone = null, touchLastOver = null;
+let touchDragActive = false;
+let longPressTimer = null;
+let longPressEl = null;
+let touchStartX = 0, touchStartY = 0;
+const LONG_PRESS_DELAY = 220; // ms
+const LONG_PRESS_MOVE_THRESHOLD = 8; // px — annule si on bouge trop vite
+
+function onTouchStart(e) {
+  const carte = this;
+  const t = e.touches[0];
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
+  touchDragActive = false;
+  longPressEl = carte;
+
+  longPressTimer = setTimeout(() => {
+    // Démarrer le drag
+    touchDragActive = true;
+    touchDragId = carte.getAttribute('data-enseigne-id');
+    const rect = carte.getBoundingClientRect();
+    touchClone = carte.cloneNode(true);
+    touchClone.style.cssText = `position:fixed;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;opacity:0.82;pointer-events:none;z-index:9999;border-radius:22px;box-shadow:0 12px 40px rgba(0,0,0,0.28);transition:none;transform:scale(1.05);`;
+    document.body.appendChild(touchClone);
+    carte.style.opacity = '0.35';
+    // Vibration légère si supportée
+    if (navigator.vibrate) navigator.vibrate(40);
+  }, LONG_PRESS_DELAY);
+}
+
+function onTouchMove(e) {
+  const t = e.touches[0];
+  const dx = Math.abs(t.clientX - touchStartX);
+  const dy = Math.abs(t.clientY - touchStartY);
+
+  if (!touchDragActive) {
+    // Annuler le long press si le doigt a trop bougé (scroll normal)
+    if (dx > LONG_PRESS_MOVE_THRESHOLD || dy > LONG_PRESS_MOVE_THRESHOLD) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    return; // Laisser le scroll se faire normalement
+  }
+
+  // Drag actif : bloquer le scroll
+  e.preventDefault();
+
+  if (touchClone) {
+    touchClone.style.left = (t.clientX - touchClone.offsetWidth / 2) + 'px';
+    touchClone.style.top  = (t.clientY - touchClone.offsetHeight / 2) + 'px';
+  }
+
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  const overCarte = el && el.closest('.carte-magasin');
+  document.querySelectorAll('.carte-magasin').forEach(c => c.classList.remove('drag-over'));
+  if (overCarte && overCarte.getAttribute('data-enseigne-id') !== touchDragId) {
+    touchLastOver = overCarte.getAttribute('data-enseigne-id');
+    overCarte.classList.add('drag-over');
+  } else {
+    touchLastOver = null;
+  }
+}
+
+function onTouchEnd(e) {
+  clearTimeout(longPressTimer);
+  longPressTimer = null;
+
+  if (longPressEl) longPressEl.style.opacity = '';
+  if (touchClone) { touchClone.remove(); touchClone = null; }
+  document.querySelectorAll('.carte-magasin').forEach(c => c.classList.remove('drag-over'));
+
+  if (touchDragActive && touchDragId && touchLastOver && touchDragId !== touchLastOver) {
+    const si = ordreMagasins.indexOf(touchDragId);
+    const ti = ordreMagasins.indexOf(touchLastOver);
+    if (si > -1 && ti > -1) {
+      ordreMagasins.splice(si, 1);
+      ordreMagasins.splice(ti, 0, touchDragId);
+      sauvegarder();
+      render();
+    }
+  }
+
+  touchDragId = null;
+  touchLastOver = null;
+  touchDragActive = false;
+  longPressEl = null;
+}
+
+
+// ===================== RECHERCHE LOGO =====================
+// Dictionnaire d'enseignes françaises connues -> domaine
+
+
+
+
+const LOGOS_INTEGRES = {
+  'carrefour': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#004A9F"/><polygon points="50,15 35,50 50,85 65,50" fill="#ED1C24"/><polygon points="15,50 50,35 85,50 50,65" fill="white"/></svg>', couleur: '#004A9F', nom: 'Carrefour' },
+  'leclerc': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#003087"/><text x="50" y="62" font-family="Arial Black" font-size="42" font-weight="900" fill="#E2001A" text-anchor="middle">E</text><text x="50" y="82" font-family="Arial" font-size="13" font-weight="700" fill="white" text-anchor="middle">LECLERC</text></svg>', couleur: '#003087', nom: 'E.Leclerc' },
+  'lidl': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0050AA"/><ellipse cx="50" cy="50" rx="35" ry="35" fill="#FFD700"/><ellipse cx="50" cy="50" rx="28" ry="28" fill="#E30613"/><text x="50" y="57" font-family="Arial Black" font-size="18" font-weight="900" fill="white" text-anchor="middle">LIDL</text></svg>', couleur: '#0050AA', nom: 'Lidl' },
+  'aldi': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#00529B"/><text x="50" y="52" font-family="Arial Black" font-size="26" font-weight="900" fill="white" text-anchor="middle">aldi</text><rect x="10" y="62" width="80" height="6" fill="#FF6600"/></svg>', couleur: '#00529B', nom: 'Aldi' },
+  'intermarch': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#E2001A"/><text x="50" y="45" font-family="Arial Black" font-size="11" font-weight="900" fill="white" text-anchor="middle">INTER</text><text x="50" y="62" font-family="Arial Black" font-size="11" font-weight="900" fill="white" text-anchor="middle">MARCHE</text><polygon points="50,68 42,80 58,80" fill="white"/></svg>', couleur: '#E2001A', nom: 'Intermarché' },
+  'auchan': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#E2001A"/><text x="50" y="72" font-family="Arial Black" font-size="13" font-weight="900" fill="white" text-anchor="middle">AUCHAN</text></svg>', couleur: '#E2001A', nom: 'Auchan' },
+  'super u': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#E2001A"/><text x="50" y="58" font-family="Arial Black" font-size="52" font-weight="900" fill="white" text-anchor="middle">U</text></svg>', couleur: '#E2001A', nom: 'Super U' },
+  'hyper u': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#E2001A"/><text x="50" y="58" font-family="Arial Black" font-size="52" font-weight="900" fill="white" text-anchor="middle">U</text></svg>', couleur: '#E2001A', nom: 'Hyper U' },
+  'monoprix': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#333333"/><text x="50" y="44" font-family="Arial" font-size="11" fill="white" text-anchor="middle">mono</text><text x="50" y="63" font-family="Arial Black" font-size="14" font-weight="900" fill="white" text-anchor="middle">PRIX</text><rect x="20" y="68" width="60" height="3" fill="#E2001A"/></svg>', couleur: '#333333', nom: 'Monoprix' },
+  'casino': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#009F4D"/><text x="50" y="58" font-family="Arial Black" font-size="16" font-weight="900" fill="white" text-anchor="middle">Casino</text><rect x="20" y="65" width="60" height="3" fill="#FFD700"/></svg>', couleur: '#009F4D', nom: 'Casino' },
+  'franprix': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#E2001A"/><text x="50" y="44" font-family="Arial Black" font-size="12" font-weight="900" fill="white" text-anchor="middle">FRAN</text><text x="50" y="62" font-family="Arial Black" font-size="12" font-weight="900" fill="white" text-anchor="middle">PRIX</text></svg>', couleur: '#E2001A', nom: 'Franprix' },
+  'picard': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#003087"/><text x="50" y="57" font-family="Arial Black" font-size="16" font-weight="900" fill="white" text-anchor="middle">picard</text></svg>', couleur: '#003087', nom: 'Picard' },
+  'biocoop': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#5BA632"/><text x="50" y="44" font-family="Arial Black" font-size="13" font-weight="900" fill="white" text-anchor="middle">BIO</text><text x="50" y="62" font-family="Arial Black" font-size="13" font-weight="900" fill="white" text-anchor="middle">COOP</text></svg>', couleur: '#5BA632', nom: 'Biocoop' },
+  'naturalia': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#7AB648"/><text x="50" y="57" font-family="Arial" font-size="11" fill="white" text-anchor="middle">naturalia</text></svg>', couleur: '#7AB648', nom: 'Naturalia' },
+  'grand frais': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#E2001A"/><text x="50" y="44" font-family="Arial Black" font-size="13" font-weight="900" fill="white" text-anchor="middle">GRAND</text><text x="50" y="62" font-family="Arial Black" font-size="13" font-weight="900" fill="white" text-anchor="middle">FRAIS</text></svg>', couleur: '#E2001A', nom: 'Grand Frais' },
+  'cora': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#E2001A"/><text x="50" y="60" font-family="Arial Black" font-size="28" font-weight="900" fill="white" text-anchor="middle">cora</text></svg>', couleur: '#E2001A', nom: 'Cora' },
+  'decathlon': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#007DC5"/><text x="50" y="44" font-family="Arial Black" font-size="9" font-weight="900" fill="white" text-anchor="middle">DECA</text><text x="50" y="62" font-family="Arial Black" font-size="9" font-weight="900" fill="white" text-anchor="middle">THLON</text></svg>', couleur: '#007DC5', nom: 'Decathlon' },
+  'leroy merlin': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#007A3E"/><text x="50" y="44" font-family="Arial Black" font-size="10" font-weight="900" fill="white" text-anchor="middle">LEROY</text><text x="50" y="62" font-family="Arial Black" font-size="10" font-weight="900" fill="white" text-anchor="middle">MERLIN</text></svg>', couleur: '#007A3E', nom: 'Leroy Merlin' },
+  'ikea': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0058A3"/><rect x="10" y="55" width="80" height="25" fill="#FFD700"/><text x="50" y="50" font-family="Arial Black" font-size="28" font-weight="900" fill="#FFD700" text-anchor="middle">IKEA</text></svg>', couleur: '#0058A3', nom: 'IKEA' },
+  'action': { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#E2001A"/><text x="50" y="60" font-family="Arial Black" font-size="22" font-weight="900" fill="white" text-anchor="middle">action</text></svg>', couleur: '#E2001A', nom: 'Action' },
+};
+
+function svgVersDataUrl(svgStr) {
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+}
+
+const LOGO_GENERIQUE = "🏪";
+
+function chercherLogo() {
+  const nom = document.getElementById('edit-nom').value.trim().toLowerCase();
+  const apercu = document.getElementById('logo-apercu');
+  apercu.style.display = 'none';
+  editLogoBase64 = null;
+
+  if (!nom) {
+    afficherApercuGenerique(apercu, 'Aucun nom saisi');
+    return;
+  }
+
+  // Chercher dans les logos intégrés
+  let logoTrouve = null;
+  for (const [cle, val] of Object.entries(LOGOS_INTEGRES)) {
+    if (nom.includes(cle)) { logoTrouve = val; break; }
+  }
+
+  if (logoTrouve) {
+    const dataUrl = svgVersDataUrl(logoTrouve.svg);
+    editLogoBase64 = dataUrl;
+    editLogoOpt = 'image';
+    apercu.innerHTML = `
+      <div class="logo-apercu-wrap">
+        <img class="logo-apercu-img" src="${dataUrl}" alt="logo" style="background:white;padding:2px">
+        <div class="logo-apercu-txt">Logo trouvé !<span>${logoTrouve.nom}</span></div>
+        <button class="btn-logo-suppr" onclick="supprimerLogoApercu()">✕ Retirer</button>
+      </div>`;
+    apercu.style.display = 'block';
+  } else {
+    afficherApercuGenerique(apercu, 'Enseigne non reconnue — logo générique utilisé');
+  }
+}
+
+function afficherApercuGenerique(apercu, msg) {
+  editLogoBase64 = 'generique';
+  editLogoOpt = 'generique';
+  apercu.innerHTML = `
+    <div class="logo-apercu-wrap">
+      <span style="font-size:2rem">${LOGO_GENERIQUE}</span>
+      <div class="logo-apercu-txt">Logo générique<span>${msg}</span></div>
+      <button class="btn-logo-suppr" onclick="supprimerLogoApercu()">✕ Retirer</button>
+    </div>`;
+  apercu.style.display = 'block';
+}
+
+function supprimerLogoApercu() {
+  editLogoBase64 = null;
+  editLogoOpt = 'lettre';
+  const la = document.getElementById('logo-apercu'); if (la) la.style.display = 'none';
+}
+
+
+// ===================== INIT =====================
+// Bloquer tout scroll horizontal natif
+document.addEventListener('touchstart', function(e) {
+  // Mémoriser la position X initiale
+  window._touchStartX = e.touches[0].clientX;
+  window._touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchmove', function(e) {
+  if (touchDragActive) { e.preventDefault(); return; }
+  const dx = Math.abs(e.touches[0].clientX - (window._touchStartX || 0));
+  const dy = Math.abs(e.touches[0].clientY - (window._touchStartY || 0));
+  // Si le mouvement est plus horizontal que vertical, bloquer
+  if (dx > dy && dx > 5) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener("DOMContentLoaded", () => render());
+</script>
+
+</body>
+</html>
